@@ -23,6 +23,7 @@ but if it did:
 - combine the changed object files using the dep map
 - figure out affected symbols and functions                        <-- we are here in the tech tree
 - package the .o files together into a single cursed dylib that tricks dlopen into not doing relocations for us
+- disable a bunch of stuff like ASLR
 - dlopen that dylib at the *same address as the program root itself* such that our pic/pie code can work properly
 - manually handle relocations at *runtime* using introspection to discover existing symbols
 - spin up new statics (try to reuse strings where possible to limit memory leakage)
@@ -41,6 +42,7 @@ Todo:
 - Respect the graph for larger projects (need to parse some random .bin files...)
 - Assemble dylib with necessary hacks (missing relocations, etc)
 - Dlopen said dylib with zero/limited-exports
+- Initial approach will not include debug symbosl for the debugger - this seems much harder than just arbitrarily loading code in
 
 
 Supposedly rust employs less "magic" making our primary hiccups:

@@ -417,8 +417,11 @@ fn analyze_diff_between_obj_dumps() {
         // these will need to be fixed up against the running process by self-inspection
         let imports = old_bj.imports().unwrap();
 
+        let mut last_reloc: Option<object::Relocation> = None;
+
         // dbg!(imports);
-        for (offset, reloc) in old_bj.section_by_index(id).unwrap().relocations() {
+        let section = &old_bj.section_by_index(id).unwrap();
+        for (offset, reloc) in section.relocations() {
             let target_sym = reloc.target();
             match target_sym {
                 RelocationTarget::Symbol(sym) => {
@@ -428,9 +431,49 @@ fn analyze_diff_between_obj_dumps() {
                         .iter()
                         .any(|f| f.name() == sym.name_bytes().unwrap())
                     {
-                        println!("[{offset} import reloc] symbol {:?}", sym);
+                        // import relocs from rust should not have a known address
+                        assert_eq!(sym.address(), 0);
+
+                        println!(
+                            "[{offset:05} import reloc] -------- @ {:?}",
+                            // "[{offset:05} import reloc] {:08x?} @ {:?}",
+                            // sym.address(),
+                            sym.name().unwrap()
+                        );
                     } else {
-                        println!("[{offset} normal reloc] {:?}", sym);
+                        // ummmm.... basically just be a normal linker here?
+                        // maybe we can zero-out the import-based relocations? and then pass this
+                        // through the regular linker?
+
+                        // get the instruction at the address of the symbol
+                        // section.data_range(address, size).unwrap();
+                        // if let Some(target_section_idx) = sym.section().index() {
+                        let target_section_idx = sym.section().index().unwrap();
+                        let target_section = old_bj.section_by_index(target_section_idx).unwrap();
+                        // println!("Target section {:?}", target_section.unwrap());
+                        // }
+
+                        // if Some(reloc) != last_reloc {
+                        //     println!("old: {:?}\n new: {:?}", last_reloc.as_ref().unwrap(), reloc);
+                        // }
+
+                        println!(
+                            "[{offset:05} normal reloc] {:08x?} @ {:?} - {:?}",
+                            sym.address(),
+                            sym.name().unwrap(),
+                            target_section.name().unwrap()
+                        );
+
+                        // seeing the same reloc in two places usually has to do with r_type and r_pcrel being different
+
+                        if let Some(last) = last_reloc.as_ref() {
+                            if last.target() == target_sym {
+                                println!(
+                                    "        [dupe reloc] old: {:?}\n        [dupe reloc] new: {:?}",
+                                    last, reloc
+                                );
+                            }
+                        }
                     }
                 }
 
@@ -439,12 +482,18 @@ fn analyze_diff_between_obj_dumps() {
                     let section = old_bj.section_by_index(section);
                     panic!("Relocing section {:?}", section)
                 }
-                RelocationTarget::Absolute => {}
+
+                RelocationTarget::Absolute => {
+                    todo!("Absolute relocs")
+                }
+
                 _ => todo!(),
             }
             // println!("Relocing ", old_bj.symbol_by_index(target_sym));
 
             // dbg!(reloc);
+
+            last_reloc = Some(reloc);
         }
 
         // dbg!(old_sym.);
@@ -542,4 +591,55 @@ fn analyze_objs() {
             }
         }
     }
+}
+
+fn disable_pie_flag() {
+    // disable it
+    // https://web.archive.org/web/20140906073648/http://src.chromium.org:80/svn/trunk/src/build/mac/change_mach_o_flags.py
+
+    // Alter the header to:
+    // - remove the PIE flag
+    // - set a specific base address that the program itself uses
+}
+
+/// Get the base address for this process to correct for ASLR
+#[test]
+fn corrects_for_asr() {
+    use macext::get_base_address;
+
+    struct MyData {
+        a: i32,
+        b: i32,
+    }
+
+    static DATA: &MyData = &MyData { a: 1, b: 2 };
+    let data_ptr = &DATA as *const _ as usize;
+    println!("DATA: {:p}", DATA);
+
+    let our_ptr = corrects_for_asr as *const () as usize;
+    let base_address = get_base_address(sysinfo::get_current_pid().unwrap().as_u32() as _);
+    // let data_seg_ptr = find_data_segment().unwrap();
+
+    println!("Our ptr: 0x{:x}", our_ptr);
+    println!("offset ptr: 0x{:x}", data_ptr - base_address);
+    println!("base offset ptr: 0x{:x}", our_ptr - base_address);
+    // println!("data segment {:x}", data_seg_ptr);
+    // println!("data segment ptr {:x}", data_seg_ptr - data_ptr);
+
+    // compute offset
+    // let offset = DATA.as_ptr() as usize - base_address;
+    // println!("Offset: 0x{:x}", offset);
+}
+
+#[test]
+fn does_alsr() {
+    static DATA: &str = "hello world!";
+
+    let us = libloading::os::unix::Library::this();
+
+    // get the base address of the library by looking for "main" or "start" symbols in the binary
+    let add = unsafe { us.get_singlethreaded::<*const ()>(b"__TEXT") }.unwrap();
+
+    println!("Base: {:p}", add.into_raw());
+    println!("DATA: {:p}", DATA);
 }
