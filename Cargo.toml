@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "packages/harness",
+    "packages/hr",
+]
+resolver = "2"

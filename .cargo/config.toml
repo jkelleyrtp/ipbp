@@ -1,0 +1,17 @@
+# [build]
+# rustflags = ["-C", "link-args=--emit-relocs"]
+
+[build]
+target = "aarch64-apple-darwin"
+# rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
+
+# target = "wasm32-unknown-unknown"
+# [target.x86_64-unknown-linux-gnu]
+
+linker = "clang"
+rustflags = [
+#     "-C", "link-arg=-fuse-ld=/usr/bin/ld64",
+#   '-Clink-args=--emit-relocs',
+    "-Csave-temps",
+    "-Clink-dead-code"
+]
