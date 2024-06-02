@@ -1,6 +1,6 @@
 [workspace]
 members = [
     "packages/harness",
-    "packages/hr",
+    "packages/hr", "packages/some-lib",
 ]
 resolver = "2"
