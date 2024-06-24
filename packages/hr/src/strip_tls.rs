@@ -14,8 +14,8 @@ use object::{
 
 #[test]
 fn list_symbols() {
-    let contents = include_bytes!("../../../prod_comp/hr_prod_pre-a7e3b91a98f994df.o");
-    let mut in_object = object::read::File::parse(contents as &[u8]).unwrap();
+    // let contents = include_bytes!("../../../prod_comp/hr_prod_pre-a7e3b91a98f994df.o");
+    // let mut in_object = object::read::File::parse(contents as &[u8]).unwrap();
 
     // for sym in in_object.symbols() {
     //     if sym.kind() == SymbolKind::Data && sym.scope() == SymbolScope::Dynamic {

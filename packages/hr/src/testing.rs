@@ -658,3 +658,67 @@ fn does_alsr() {
     println!("Base: {:p}", add.into_raw());
     println!("DATA: {:p}", DATA);
 }
+
+// let _out = std::process::Command::new("cargo")
+//     .arg("rustc")
+//     .arg("--package")
+//     .arg("hr")
+//     .arg("--")
+//     .arg("-Clinker=/Users/jonkelley/Development/Tinkering/ipbp/dummylinker.sh")
+//     .output()
+//     .unwrap();
+//         // .arg("rustc")
+//         // .arg("--package")
+//         // .arg("hr")
+//         // .arg("--")
+//         // .arg("-Clinker=/Users/jonkelley/Development/Tinkering/ipbp/dummylinker.sh")
+//         // .arg("-Clinker=")
+//         // .arg("--emit=obj")
+//         // .arg("-o")
+//         // .arg("prod_comp/hr_prod")
+//         // .arg("prod_comp/hr_prod_pre")
+// let _out = std::process::Command::new("cargo")
+//     .arg("rustc")
+//     .arg("--package")
+//     .arg("hr")
+//     .arg("--")
+//     // .arg("-Clinker=/Users/jonkelley/Development/Tinkering/ipbp/dummylinker.sh")
+//     // .arg("-Clinker=")
+//     .arg("--emit=obj")
+//     .arg("-o")
+//     .arg("prod_comp/hr_prod")
+//     // .arg("prod_comp/hr_prod_pre")
+//     .output()
+//     .unwrap();
+
+// let elapsed = now.elapsed();
+// println!("incr build took: {:?}", elapsed.as_millis());
+
+// Rust will mark this with a fingerprint, so we actually need to find the first file that matches the pattern
+// let fprint = find_finger_print().unwrap();
+
+// We want to obj copy and strip out statics/tls such that they get inherited by their parent process
+// We'll eventually achieve this by walking the symbol table and removing all the statics/tls
+// For now, just choose one static to remove and see if it works
+// let _out = std::process::Command::new("~/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/bin/llvm-objcopy")
+//     .arg("--strip-symbol")
+//     .arg("SHARED_SYMBOL")
+//     .arg(format!("prod_comp/hr_prod_pre-{}.o", fprint))
+//     .arg(format!("prod_comp/hr_prod-{}.o", fprint))
+//     .output()
+//     .unwrap();
+
+// println!("man linking...");
+// // we want to link it such that it's a shared object, and we can load it in and patch it in
+// // cc -dylib  -undefined dynamic_lookup -arch arm64 hr_obj-a7e3b91a98f994df.o -o prod_comp/hr_prod_dylib
+// let _out = std::process::Command::new("cc")
+//     .arg("-dylib")
+//     .arg("-undefined")
+//     .arg("dynamic_lookup")
+//     .arg("-arch")
+//     .arg("arm64")
+//     .arg(format!("prod_comp/hr_prod-{}.o", fprint))
+//     .arg("-o")
+//     .arg("prod_comp/hr_prod_dylib.so")
+//     .output()
+//     .unwrap();

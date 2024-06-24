@@ -1,0 +1,46 @@
+
+cp \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.10sfufbyava1ywwc.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.11b3yb16ppzrac8q.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.168zs9st4lsy2gz8.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.18sinlk2pe21lgy8.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.19t3d5tvn2jnb19j.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1d6pl9cphqjczvqf.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1dvakrcpvik7g8tl.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1fygx9m9q3ke2iuh.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1gdfl539uelh2kab.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1hz56qhpgji4d7cu.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1ipi4aftvdu86yhw.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1k33pxyfqtiiw57v.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1opqyf5rn8srerc3.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1pzcl4nx8gq4l9gp.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1q2cumdv7flfbl0q.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1q5sc7ftzsb9vyca.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1qji2rz11htqk4bd.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1ukz5si1eokmap6i.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1vr106p9fo39y0sg.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1w9q1s7rpilmsprc.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.1zqy00mr4v2s6pyh.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.20mu0okcyjqvxiy2.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.21df9ydep642j3jp.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.27v9fjc3f6a7mo4s.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.29e61ln8lfwqrknm.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2crms57y66dauwv4.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2d6pyxm4qhzuy8pc.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2dbq8xawiduf8j7q.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2e0vof69wlhibsss.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2efllki3z85pcgqn.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2fltp27vjhs2j2f6.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2kn0lj7m2h6qpah9.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2logktrcrnh4kgmu.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2n8n11inwfqyixvx.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2ryuw2u2qljbzjdw.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2u0atuwe6hjxnh61.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2vsm9325ni2cxpbr.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2wk2fulmsb5vng99.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2x6m3c5s5ttgek5x.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2zozm6aai4vs0zj6.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.2zrliu54d0klzbsz.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.30htvcqoilxfbepn.rcgu.o \
+    /Users/jonkelley/Development/Tinkering/ipbp/target/aarch64-apple-darwin/debug/deps/hr-19240d9c564dcc27.31ip6nucdiq1sy7o.rcgu.o \
+    linker_artifacts/saved_objects/

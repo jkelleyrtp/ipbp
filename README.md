@@ -87,6 +87,25 @@ Wasm should also be easy in theory, and then Linux too.
 Windows scares me.
 Android/ios require a networked variant of this which, again, should work in theory.
 
+## Macho
+
+- don't use --emit=obj - link it ourself
+- become the linker with -Clinker=blah
+- look for missing GOT relocations and stitch those together for incremental compiles
+- find missing relocations and then fill them in with an extra stub file?
+
+why do we care about only linking the new stuff? faster? fewer collisions? symbol overwriting?
+
+it's moooooostly because it seems more "pure" to only feed in changed symbols.
+- memory consumption
+- some perf stuff
+- intra-project threadlocals/static muts
+
+
+## Questions?
+
+- how to handle async? will need runtime integration
+- fast enough to not need literal plumbing?
 
 ## Tricks
 
@@ -101,6 +120,8 @@ Android/ios require a networked variant of this which, again, should work in the
 - https://crates.io/crates/formatic
 - https://github.com/Toni-Graphics/Formatic
 - https://fasterthanli.me/series/making-our-own-executable-packer/part-18
+- https://docs.oracle.com/cd/E19683-01/816-1386/chapter6-54839/index.html
+- https://davidlattimore.github.io/posts/2024/02/04/speeding-up-the-rust-edit-build-run-cycle.html
 
 ## ummmmmmmmmmmmmmmm
 

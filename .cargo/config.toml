@@ -10,13 +10,16 @@ target = "aarch64-apple-darwin"
 
 # linker = "clang"
 rustflags = [
+    # "-C", "link-arg=-export_dynamic",
+    # "-C", "link-arg=-d"
 #     "-C", "link-arg=-fuse-ld=/usr/bin/ld64",
     # '-Clink-args=--emit-relocs',
-    "-Csave-temps",
-    "-Clink-dead-code",
-    "--print",
-    "link-args",
-    "-Cincremental=foo",
+    # "-Csave-temps",
+    # "-Clink-dead-code",
+    # "--print",
+    # "link-args",
+    # "-Cincremental=foo",
     # "-Clink-arg=-rdynamic",
 ]
+
 

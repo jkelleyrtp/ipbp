@@ -1,6 +1,13 @@
 [workspace]
 members = [
     "packages/harness",
-    "packages/hr", "packages/some-lib",
+    "packages/hr", "packages/patch-linker", "packages/some-lib",
 ]
 resolver = "2"
+
+[profile.dev]
+debug = 0
+strip = "debuginfo"
+
+[profile.dev.package."*"]
+opt-level = 3
