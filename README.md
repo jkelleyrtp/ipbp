@@ -2,7 +2,6 @@
 
 ![it works](hotreload_works.gif)
 
-
 Patch rust functions at runtime with magic and linker hacks.
 
 More limited than Live++, but similar results, kinda like Live++ "lite".
