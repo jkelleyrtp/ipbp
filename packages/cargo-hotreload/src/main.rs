@@ -7,6 +7,7 @@ use notify::{event::DataChange, Watcher};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt},
     process::{Child, Command},
+    time::Instant,
 };
 
 #[tokio::main]
@@ -77,11 +78,13 @@ async fn main() -> anyhow::Result<()> {
             .arg("json-diagnostic-rendered-ansi")
             .arg("--")
             .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
+            .arg(format!("-Cdebuginfo=0"))
             .env("HOTRELOAD_LINK", "reload")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
 
+        let started = Instant::now();
         let Ok(output) = run_cargo_output(fast_build).await else {
             continue;
         };
@@ -96,6 +99,7 @@ async fn main() -> anyhow::Result<()> {
         app_stdin
             .write_all(format!("{}\n", output_temp).as_bytes())
             .await?;
+        println!("took {:?}", started.elapsed());
     }
 
     drop(app);
@@ -143,6 +147,8 @@ async fn link(action: String) -> anyhow::Result<()> {
                 .arg("arm64")
                 .arg("-o")
                 .arg(&out_file)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
                 .output()
                 .await?;
             let err = String::from_utf8_lossy(&res.stderr);
@@ -187,7 +193,7 @@ async fn run_cargo_output(mut child: Child) -> anyhow::Result<Utf8PathBuf> {
             }
             Message::CompilerMessage(compiler_message) => {
                 if let Some(rendered) = compiler_message.message.rendered {
-                    println!("{rendered}");
+                    // println!("{rendered}");
                 }
             }
             Message::BuildScriptExecuted(_build_script) => {}
@@ -197,7 +203,9 @@ async fn run_cargo_output(mut child: Child) -> anyhow::Result<Utf8PathBuf> {
                     anyhow::bail!("Build failed");
                 }
             }
-            Message::TextLine(word) => println!("{word}"),
+            Message::TextLine(word) => {
+                // println!("{word}")
+            }
             _ => {}
         }
     }

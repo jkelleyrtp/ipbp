@@ -4,7 +4,7 @@ members = [
     "packages/harness",
     "packages/patch-linker",
     "packages/some-lib",
-    "packages/cargo-hotreload", "packages/hotreload-macro",
+    "packages/cargo-hotreload", "packages/hotreload-macro", "packages/binary-patch",
 ]
 resolver = "2"
 
