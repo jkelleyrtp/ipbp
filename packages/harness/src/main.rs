@@ -1,12 +1,16 @@
+use dioxus::prelude::*;
+
+mod hooks;
+pub use hooks::*;
+
 fn main() {
-    loop {
-        some_func_1();
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
+    dioxus::launch(app);
 }
 
-#[no_mangle]
-#[inline(never)]
-pub fn some_func_1() {
-    println!("some_func_3");
+fn app() -> Element {
+    rsx! {
+        div {
+            h1 { "Hotrleoad" }
+        }
+    }
 }

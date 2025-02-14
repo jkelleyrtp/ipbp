@@ -3,14 +3,16 @@
 
 # [build]
 target = "aarch64-apple-darwin"
+rustflags = [
+    "-C", "link-arg=-Wl,-export_dynamic",
+]
+
 # rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
 
 # target = "wasm32-unknown-unknown"
 # [target.x86_64-unknown-linux-gnu]
 
 # linker = "clang"
-rustflags = [
-    # "-C", "link-arg=-export_dynamic",
     # "-C", "link-arg=-d"
 #     "-C", "link-arg=-fuse-ld=/usr/bin/ld64",
     # '-Clink-args=--emit-relocs',
@@ -20,6 +22,5 @@ rustflags = [
     # "link-args",
     # "-Cincremental=foo",
     # "-Clink-arg=-rdynamic",
-]
 
 

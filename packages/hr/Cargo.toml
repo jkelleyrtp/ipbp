@@ -19,10 +19,11 @@ serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 sysinfo = "0.30.12"
 page_size = "0.4.2"
+tokio = { version = "1.38.0", features = ["full"] }
 
 some-lib = { path = "../some-lib"}
-dioxus = { version = "0.5", features = ["desktop"]}
-tokio = { version = "1.38.0", features = ["full"] }
+dioxus = { version = "0.6", features = ["desktop"]}
+# dioxus = { path = ""}
 
 # [patch.crates-io]
 # dioxus = { path = "../../../../dioxus/packages/dioxus"}
