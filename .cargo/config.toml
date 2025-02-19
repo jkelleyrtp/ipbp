@@ -1,11 +1,14 @@
-[build]
+# [build]
+
+# target = "aarch64-apple-darwin"
+# rustflags = [
+#     # "-C"
+#     # "-C", "link-arg=-Wl,-export_dynamic",
+# ]
+
 # rustflags = ["-C", "link-args=--emit-relocs"]
 
 # [build]
-target = "aarch64-apple-darwin"
-rustflags = [
-    "-C", "link-arg=-Wl,-export_dynamic",
-]
 
 # rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
 

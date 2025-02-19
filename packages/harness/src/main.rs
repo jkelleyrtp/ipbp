@@ -1,3 +1,5 @@
+use std::any::TypeId;
+
 use binary_patch::*;
 use dioxus::prelude::*;
 
@@ -18,62 +20,126 @@ fn zoom_controls() -> Element {
     rsx! {
         div {
             h1 { "Rust VIBE CODING" }
-            em { "powered by" }
+            em { "powered by 123" }
             h2 { "Dioxus Binary Patching 💪" }
-            div { "It works! Fantastically if you ask me" }
             button {
                 onclick: move |_| {
                     count.set(count() + 1);
                 },
-                "Click me"
+                "Click me?"
+            }
+            button {
+                onclick: move |_| {
+                    count.set(count() + 2);
+                },
+                "Click me again?!!!"
             }
             div { "You wow that's insane it works {count() * 2} times" }
+            button {
+                onclick: move |_| {
+                    window().webview.zoom(1.5).unwrap();
+                },
+                "Zoom in"
+            }
             button {
                 onclick: move |_| {
                     window().webview.zoom(1.0).unwrap();
                 },
                 "Reset zoom"
             }
-            Child { a: 123, b: "hello!" }
+            Child { a: 123, b: "hello!?" }
+            Child2 {}
             Child2 {}
             for i in 0..count() {
-                div { "You wow that's insane it works {i} times" }
+                div { "You wow that's insane it works {i} {i} {i * 2} times" }
                 button {
                     onclick: move |_| {
                         window().webview.zoom(2.0).unwrap();
                     },
-                    "Zoom in"
+                    "Zoom in!!!"
                 }
             }
+            NewKid {}
+        }
+    }
+}
+
+#[component]
+fn NewKid() -> Element {
+    rsx! {
+        div { "NewKid!" }
+    }
+}
+
+static MyGlobal: GlobalSignal<i32> = GlobalSignal::new(|| 0);
+
+struct NewStruct {
+    abc: i32,
+}
+
+impl NewStruct {
+    fn new() -> Self {
+        Self { abc: 0 }
+    }
+}
+
+#[component]
+fn GlobalInner() -> Element {
+    println!("TypeId: {:?}", TypeId::of::<NewStruct>());
+
+    let s = NewStruct::new();
+
+    rsx! {
+        h1 { "GlobalSignal: {MyGlobal}" }
+        h3 { "NewStruct: {s.abc}" }
+        button {
+            onclick: move |_| {
+                *MyGlobal.write() += 1;
+            },
+            "Increment global"
+        }
+        button {
+            onclick: move |_| {
+                *MyGlobal.write() -= 1;
+            },
+            "Decrement global"
         }
     }
 }
 
 #[component]
 fn Child(a: i32, b: String) -> Element {
-    let mut count = use_signal(|| 0);
-    use_effect(move || {
-        println!("count is {count}");
-    });
+    let mut count = use_signal(|| 2);
 
     rsx! {
-        h1 { "Hi from child: {a} {b}" }
+        h1 { "Hi from child: {a} {b} -> {count}" }
         button {
             onclick: move |_| {
                 count.set(count() + 1);
             },
-            "Increment"
+            "Increment Count"
         }
-        AddingLogger {}
-        AddingLogger {}
+        button {
+            onclick: move |_| {
+                count.set(count() - 1);
+            },
+            "Decrement count"
+        }
+        GlobalInner {}
         AddingLogger {}
     }
 }
 
+#[component]
 fn Child2() -> Element {
-    rsx! { "Child 2" }
+    rsx! {
+        div { "Child 4" }
+        div { "Child 4" }
+        div { "Child 4" }
+    }
 }
 
+#[component]
 fn AddingLogger() -> Element {
     let mut items = use_signal(|| vec![]);
     let mut cur_entry = use_signal(|| String::new());

@@ -1,10 +1,13 @@
 [workspace]
 members = [
-    "packages/hr",
+    # "packages/hr",
+    # "packages/patch-linker",
+    # "packages/some-lib",
     "packages/harness",
-    "packages/patch-linker",
-    "packages/some-lib",
-    "packages/cargo-hotreload", "packages/hotreload-macro", "packages/binary-patch",
+    "packages/cargo-hotreload",
+    "packages/hotreload-macro",
+    "packages/binary-patch",
+    "packages/object-diff",
 ]
 resolver = "2"
 
@@ -17,6 +20,8 @@ serde = "1.0.61"
 syn = "2.0"
 quote = "1.0"
 proc-macro2 = "1.0"
+dioxus = { path = "../../dioxus/packages/dioxus" }
+object = { version = "=0.36.5", features = ["all"] }
 
 [profile.dev]
 debug = 0

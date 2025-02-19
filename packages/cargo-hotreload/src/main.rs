@@ -1,9 +1,10 @@
-use std::{path::PathBuf, process::Stdio};
+use std::{path::PathBuf, process::Stdio, time::SystemTime};
 
 use anyhow::Context;
 use cargo_metadata::camino::Utf8PathBuf;
 use futures::StreamExt;
 use notify::{event::DataChange, Watcher};
+use serde::Deserialize;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt},
     process::{Child, Command},
@@ -16,8 +17,16 @@ async fn main() -> anyhow::Result<()> {
         return link(action).await;
     }
 
-    let cur_exe = std::env::current_exe()?;
+    // Save the state of the rust files
+    let main_rs = PathBuf::from(workspace_root().join("packages/harness/src/main.rs"));
+    let mut contents = std::fs::read_to_string(&main_rs).unwrap();
 
+    // Modify the main.rs mtime so we skip "fresh" builds
+    // Basically `touch main.rs` in the directory
+    std::fs::File::open(&main_rs)?.set_modified(SystemTime::now())?;
+
+    let cur_exe = std::env::current_exe()?;
+    let now = std::time::Instant::now();
     let inital_build = Command::new("cargo")
         .arg("rustc")
         .arg("--package")
@@ -28,14 +37,20 @@ async fn main() -> anyhow::Result<()> {
         .arg("hotreload")
         .arg("--message-format")
         .arg("json-diagnostic-rendered-ansi")
+        .arg("--verbose")
         .arg("--")
         .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
         .env("HOTRELOAD_LINK", "start")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .kill_on_drop(true)
         .spawn()?;
 
-    let exe = run_cargo_output(inital_build).await?;
+    let CargoOutputResult {
+        output_location: exe,
+        direct_rustc,
+    } = run_cargo_output(inital_build, false).await?;
+    println!("Initial build complete in: {:?}", now.elapsed());
 
     // copy the exe and give it a "fat" name
     let now = std::time::SystemTime::UNIX_EPOCH;
@@ -54,7 +69,6 @@ async fn main() -> anyhow::Result<()> {
         _ = tx.unbounded_send(res);
     })?;
 
-    let main_rs = PathBuf::from(workspace_root().join("packages/harness/src/main.rs"));
     watcher.watch(&main_rs, notify::RecursiveMode::NonRecursive)?;
 
     while let Some(Ok(event)) = rx.next().await {
@@ -64,36 +78,52 @@ async fn main() -> anyhow::Result<()> {
             continue;
         }
 
-        println!("Fast reloading...");
+        let new_contents = std::fs::read_to_string(&main_rs).unwrap();
+        if new_contents == contents {
+            println!("File changed but contents didn't change");
+            continue;
+        }
+        contents = new_contents;
 
-        let fast_build = Command::new("cargo")
-            .arg("rustc")
-            .arg("--package")
-            .arg("harness")
-            .arg("--bin")
-            .arg("harness")
-            .arg("--profile")
-            .arg("hotreload")
-            .arg("--message-format")
-            .arg("json-diagnostic-rendered-ansi")
-            .arg("--")
-            .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
-            .arg(format!("-Cdebuginfo=0"))
+        println!("Fast reloading... ");
+
+        let fast_build = Command::new(direct_rustc[0].clone())
+            .args(direct_rustc[1..].iter())
             .env("HOTRELOAD_LINK", "reload")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
 
+        // going through rustc directly
+        // .arg("rustc")
+        // .arg("--package")
+        // .arg("harness")
+        // .arg("--bin")
+        // .arg("harness")
+        // .arg("--profile")
+        // .arg("hotreload")
+        // .arg("--message-format")
+        // .arg("json-diagnostic-rendered-ansi")
+        // .arg("--verbose")
+        // .arg("--")
+        // .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
+        // .arg(format!("-Cdebuginfo=0"))
+
         let started = Instant::now();
-        let Ok(output) = run_cargo_output(fast_build).await else {
-            continue;
+        let output = run_cargo_output(fast_build, false).await;
+        let output = match output {
+            Ok(output) => output.output_location,
+            Err(e) => {
+                println!("cargo failed: {e:?}");
+                continue;
+            }
         };
 
         let output_temp =
             output.with_file_name(format!("output-{}", now.elapsed().unwrap().as_millis()));
         std::fs::copy(&output, &output_temp).unwrap();
 
-        println!("output: {:?}", output_temp);
+        // println!("output: {:?}", output_temp);
 
         // write the new object file to the stdin of the app
         app_stdin
@@ -165,12 +195,22 @@ fn workspace_root() -> PathBuf {
     "/Users/jonkelley/Development/Tinkering/ipbp".into()
 }
 
-async fn run_cargo_output(mut child: Child) -> anyhow::Result<Utf8PathBuf> {
+struct CargoOutputResult {
+    output_location: Utf8PathBuf,
+    direct_rustc: Vec<String>,
+}
+
+async fn run_cargo_output(
+    mut child: Child,
+    should_render: bool,
+) -> anyhow::Result<CargoOutputResult> {
     let stdout = tokio::io::BufReader::new(child.stdout.take().unwrap());
     let stderr = tokio::io::BufReader::new(child.stderr.take().unwrap());
     let mut output_location = None;
     let mut stdout = stdout.lines();
     let mut stderr = stderr.lines();
+
+    let mut direct_rustc = vec![];
 
     loop {
         use cargo_metadata::Message;
@@ -181,37 +221,76 @@ async fn run_cargo_output(mut child: Child) -> anyhow::Result<Utf8PathBuf> {
             else => break,
         };
 
-        let Some(Ok(message)) = Message::parse_stream(std::io::Cursor::new(line)).next() else {
-            continue;
-        };
+        let mut messages = Message::parse_stream(std::io::Cursor::new(line));
 
-        match message {
-            Message::CompilerArtifact(artifact) => {
-                if let Some(i) = artifact.executable {
-                    output_location = Some(i)
+        loop {
+            let message = match messages.next() {
+                Some(Ok(message)) => message,
+                None => break,
+                other => {
+                    println!("other: {other:?}");
+                    break;
                 }
-            }
-            Message::CompilerMessage(compiler_message) => {
-                if let Some(rendered) = compiler_message.message.rendered {
-                    // println!("{rendered}");
+            };
+
+            match message {
+                Message::CompilerArtifact(artifact) => {
+                    if let Some(i) = artifact.executable {
+                        output_location = Some(i)
+                    }
                 }
-            }
-            Message::BuildScriptExecuted(_build_script) => {}
-            Message::BuildFinished(build_finished) => {
-                if !build_finished.success {
-                    // assuming we received a message from the compiler, so we can exit
-                    anyhow::bail!("Build failed");
+                Message::CompilerMessage(compiler_message) => {
+                    if let Some(rendered) = &compiler_message.message.rendered {
+                        if should_render {
+                            println!("rendered: {rendered}");
+                        }
+                    }
                 }
+                Message::BuildScriptExecuted(_build_script) => {}
+                Message::BuildFinished(build_finished) => {
+                    if !build_finished.success {
+                        // assuming we received a message from the compiler, so we can exit
+                        anyhow::bail!("Build failed");
+                    }
+                }
+                Message::TextLine(word) => {
+                    if word.trim().starts_with("Running ") {
+                        // trim everyting but the contents between the quotes
+                        let args = word
+                            .trim()
+                            .trim_start_matches("Running `")
+                            .trim_end_matches('`');
+
+                        direct_rustc.extend(shell_words::split(args).unwrap());
+                    }
+
+                    if let Ok(artifact) = serde_json::from_str::<RustcArtifact>(&word) {
+                        if artifact.emit == "link" {
+                            output_location =
+                                Some(Utf8PathBuf::from_path_buf(artifact.artifact).unwrap());
+                        }
+                    }
+
+                    if should_render {
+                        println!("text: {word}")
+                    }
+                }
+                _ => {}
             }
-            Message::TextLine(word) => {
-                // println!("{word}")
-            }
-            _ => {}
         }
     }
 
     let output_location =
         output_location.context("Failed to find output location. Build must've failed.")?;
 
-    Ok(output_location)
+    Ok(CargoOutputResult {
+        output_location,
+        direct_rustc,
+    })
+}
+
+#[derive(Debug, Deserialize)]
+struct RustcArtifact {
+    artifact: PathBuf,
+    emit: String,
 }

@@ -1,0 +1,6330 @@
+{
+    "query_data": [
+        {
+            "label": "associated_item",
+            "time": {
+                "secs": 0,
+                "nanos": 122921
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 122921
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 122921
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "all_diagnostic_items",
+            "time": {
+                "secs": 0,
+                "nanos": 502375
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 135203
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 15417
+            }
+        },
+        {
+            "label": "reachable_non_generics",
+            "time": {
+                "secs": 0,
+                "nanos": 36791
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 541
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_diagnostic_items",
+            "time": {
+                "secs": 0,
+                "nanos": 62040
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 62040
+            },
+            "number_of_cache_misses": 265,
+            "number_of_cache_hits": 0,
+            "invocation_count": 265,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "codegen_copy_artifacts_from_incr_cache",
+            "time": {
+                "secs": 0,
+                "nanos": 384918589
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 384918589
+            },
+            "number_of_cache_misses": 232,
+            "number_of_cache_hits": 0,
+            "invocation_count": 232,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "coroutine_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 810368
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 766481
+            },
+            "number_of_cache_misses": 4320,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4320,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "early_lint_checks",
+            "time": {
+                "secs": 0,
+                "nanos": 8140958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7251541
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1792
+            }
+        },
+        {
+            "label": "backend_optimization_level",
+            "time": {
+                "secs": 0,
+                "nanos": 625
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 625
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_required_panic_strategy",
+            "time": {
+                "secs": 0,
+                "nanos": 6794
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6794
+            },
+            "number_of_cache_misses": 230,
+            "number_of_cache_hits": 0,
+            "invocation_count": 230,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_adt_destructor",
+            "time": {
+                "secs": 0,
+                "nanos": 312915
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 52788
+            },
+            "number_of_cache_misses": 46,
+            "number_of_cache_hits": 0,
+            "invocation_count": 46,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "try_normalize_generic_arg_after_erasing_regions",
+            "time": {
+                "secs": 0,
+                "nanos": 130918
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 49125
+            },
+            "number_of_cache_misses": 15,
+            "number_of_cache_hits": 0,
+            "invocation_count": 15,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_impl_trait_header",
+            "time": {
+                "secs": 0,
+                "nanos": 339291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 339291
+            },
+            "number_of_cache_misses": 392,
+            "number_of_cache_hits": 0,
+            "invocation_count": 392,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "pre_AST_expansion_lint_checks",
+            "time": {
+                "secs": 0,
+                "nanos": 173624
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 173624
+            },
+            "number_of_cache_misses": 19,
+            "number_of_cache_hits": 0,
+            "invocation_count": 19,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "generics_of",
+            "time": {
+                "secs": 0,
+                "nanos": 2080839
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1574976
+            },
+            "number_of_cache_misses": 3377,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3377,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 1254609
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_defaultness",
+            "time": {
+                "secs": 0,
+                "nanos": 1000
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1000
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "all_local_trait_impls",
+            "time": {
+                "secs": 0,
+                "nanos": 5209
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5167
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 4750
+            }
+        },
+        {
+            "label": "used_crates",
+            "time": {
+                "secs": 0,
+                "nanos": 148167
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 148125
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 140833
+            }
+        },
+        {
+            "label": "check_unused_macros",
+            "time": {
+                "secs": 0,
+                "nanos": 250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 250
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "resolver_for_lowering_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 257986250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 439873
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 708
+            }
+        },
+        {
+            "label": "cgu_partitioning_internalize_symbols",
+            "time": {
+                "secs": 0,
+                "nanos": 1533416
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1533416
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "lint_expectations",
+            "time": {
+                "secs": 0,
+                "nanos": 2926666
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 724354
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "parse_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 307375
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 307375
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "LLVM_module_optimize",
+            "time": {
+                "secs": 0,
+                "nanos": 4084
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4084
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_attrs_for_def",
+            "time": {
+                "secs": 0,
+                "nanos": 165584
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 165584
+            },
+            "number_of_cache_misses": 36,
+            "number_of_cache_hits": 0,
+            "invocation_count": 36,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "lib_features",
+            "time": {
+                "secs": 0,
+                "nanos": 2125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2125
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "encode_query_results_for",
+            "time": {
+                "secs": 0,
+                "nanos": 26702755
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 26702755
+            },
+            "number_of_cache_misses": 61,
+            "number_of_cache_hits": 0,
+            "invocation_count": 61,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "type_of",
+            "time": {
+                "secs": 0,
+                "nanos": 1941291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1492223
+            },
+            "number_of_cache_misses": 549,
+            "number_of_cache_hits": 0,
+            "invocation_count": 549,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 1436029
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "inferred_outlives_of",
+            "time": {
+                "secs": 0,
+                "nanos": 2458
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 333
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "maybe_building_test_harness",
+            "time": {
+                "secs": 0,
+                "nanos": 208
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 208
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "codegen_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 211098958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 49592283
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_prepare_session_directory",
+            "time": {
+                "secs": 0,
+                "nanos": 49720875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 49720875
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "type_check_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 41749875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6940794
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "write_dep_info",
+            "time": {
+                "secs": 0,
+                "nanos": 995667
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 358750
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "defined_lang_items",
+            "time": {
+                "secs": 0,
+                "nanos": 64966
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 23297
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "impl_trait_header",
+            "time": {
+                "secs": 0,
+                "nanos": 492560
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 153269
+            },
+            "number_of_cache_misses": 392,
+            "number_of_cache_hits": 0,
+            "invocation_count": 392,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 116422
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "adt_drop_tys",
+            "time": {
+                "secs": 0,
+                "nanos": 4209
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4209
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 4209
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crate_injection",
+            "time": {
+                "secs": 0,
+                "nanos": 17250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 17250
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "intrinsic_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 916
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 707
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "macro_expand_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 180692750
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7917
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_generics_of",
+            "time": {
+                "secs": 0,
+                "nanos": 505863
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 505863
+            },
+            "number_of_cache_misses": 3377,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3377,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "erase_regions_ty",
+            "time": {
+                "secs": 0,
+                "nanos": 277338
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 93706
+            },
+            "number_of_cache_misses": 419,
+            "number_of_cache_hits": 0,
+            "invocation_count": 419,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_dep_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 7841
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7841
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "misc_checking_3",
+            "time": {
+                "secs": 0,
+                "nanos": 15573708
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 763880
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crate_lints",
+            "time": {
+                "secs": 0,
+                "nanos": 500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 500
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "impl_super_outlives",
+            "time": {
+                "secs": 0,
+                "nanos": 11084
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9750
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "layout_testing",
+            "time": {
+                "secs": 0,
+                "nanos": 583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 583
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "eval_to_valtree",
+            "time": {
+                "secs": 0,
+                "nanos": 77415
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 45750
+            },
+            "number_of_cache_misses": 15,
+            "number_of_cache_hits": 0,
+            "invocation_count": 15,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "native_libraries",
+            "time": {
+                "secs": 0,
+                "nanos": 225283
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 33420
+            },
+            "number_of_cache_misses": 270,
+            "number_of_cache_hits": 0,
+            "invocation_count": 270,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "thir_abstract_const",
+            "time": {
+                "secs": 0,
+                "nanos": 14216
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 14174
+            },
+            "number_of_cache_misses": 380,
+            "number_of_cache_hits": 0,
+            "invocation_count": 380,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_garbage_collect_session_directories",
+            "time": {
+                "secs": 0,
+                "nanos": 118708
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 118708
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_is_profiler_runtime",
+            "time": {
+                "secs": 0,
+                "nanos": 7584
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7584
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_prepare_load_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 18837833
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1142291
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_compiler_builtins",
+            "time": {
+                "secs": 0,
+                "nanos": 23417
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 17003
+            },
+            "number_of_cache_misses": 232,
+            "number_of_cache_hits": 0,
+            "invocation_count": 232,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "monomorphization_collector_graph_walk",
+            "time": {
+                "secs": 0,
+                "nanos": 104253125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 21696950
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_native_libraries",
+            "time": {
+                "secs": 0,
+                "nanos": 171698
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 171698
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_extern_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "number_of_cache_misses": 4,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_associated_item_def_ids",
+            "time": {
+                "secs": 0,
+                "nanos": 9832
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9832
+            },
+            "number_of_cache_misses": 15,
+            "number_of_cache_hits": 0,
+            "invocation_count": 15,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "associated_item_def_ids",
+            "time": {
+                "secs": 0,
+                "nanos": 11750
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1918
+            },
+            "number_of_cache_misses": 15,
+            "number_of_cache_hits": 0,
+            "invocation_count": 15,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "misc_checking_1",
+            "time": {
+                "secs": 0,
+                "nanos": 63226917
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 618593
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crate_for_resolver",
+            "time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 125
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 125
+            }
+        },
+        {
+            "label": "features_query",
+            "time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 959
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 959
+            }
+        },
+        {
+            "label": "explicit_predicates_of",
+            "time": {
+                "secs": 0,
+                "nanos": 598410
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 587702
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 586868
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "limits",
+            "time": {
+                "secs": 0,
+                "nanos": 2208
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2208
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_profiler_runtime",
+            "time": {
+                "secs": 0,
+                "nanos": 26378
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 18794
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_thir_abstract_const",
+            "time": {
+                "secs": 0,
+                "nanos": 42
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 42
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_is_panic_runtime",
+            "time": {
+                "secs": 0,
+                "nanos": 6877
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6877
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crate_hash",
+            "time": {
+                "secs": 0,
+                "nanos": 1042960
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 831554
+            },
+            "number_of_cache_misses": 270,
+            "number_of_cache_hits": 0,
+            "invocation_count": 270,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 35538
+            }
+        },
+        {
+            "label": "drop_ast",
+            "time": {
+                "secs": 0,
+                "nanos": 7020709
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7020709
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "used_crate_source",
+            "time": {
+                "secs": 0,
+                "nanos": 157784
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 124444
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 86946
+            }
+        },
+        {
+            "label": "resolve_postprocess",
+            "time": {
+                "secs": 0,
+                "nanos": 1197500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1197500
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_intrinsic_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "hir_owner_parent",
+            "time": {
+                "secs": 0,
+                "nanos": 28879
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 28879
+            },
+            "number_of_cache_misses": 570,
+            "number_of_cache_hits": 0,
+            "invocation_count": 570,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "drop_compiler",
+            "time": {
+                "secs": 0,
+                "nanos": 1129291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1129291
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "LLVM_passes",
+            "time": {
+                "secs": 0,
+                "nanos": 44722041
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 44722041
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "codegen_module_optimize",
+            "time": {
+                "secs": 0,
+                "nanos": 1229958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 8332
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "fn_sig",
+            "time": {
+                "secs": 0,
+                "nanos": 660980
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 660980
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 660980
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "check_dirty_clean",
+            "time": {
+                "secs": 0,
+                "nanos": 42
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 42
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "cgu_partitioning_place_items",
+            "time": {
+                "secs": 0,
+                "nanos": 19850667
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15012727
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "self_profile_alloc_query_strings",
+            "time": {
+                "secs": 0,
+                "nanos": 2325250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2325250
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_missing_lang_items",
+            "time": {
+                "secs": 0,
+                "nanos": 41963
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 41963
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "serialize_work_products",
+            "time": {
+                "secs": 0,
+                "nanos": 412041
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 412041
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_serialize_result_cache",
+            "time": {
+                "secs": 0,
+                "nanos": 32856000
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6130042
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "hir_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 56083459
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 38616876
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1292
+            }
+        },
+        {
+            "label": "module_children",
+            "time": {
+                "secs": 0,
+                "nanos": 6593367
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 96493
+            },
+            "number_of_cache_misses": 459,
+            "number_of_cache_hits": 0,
+            "invocation_count": 459,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "explicit_implied_predicates_of",
+            "time": {
+                "secs": 0,
+                "nanos": 1334
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 459
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "expn_that_defined",
+            "time": {
+                "secs": 0,
+                "nanos": 112802
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 87012
+            },
+            "number_of_cache_misses": 201,
+            "number_of_cache_hits": 0,
+            "invocation_count": 201,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 48255
+            }
+        },
+        {
+            "label": "assert_symbols_are_distinct",
+            "time": {
+                "secs": 0,
+                "nanos": 13189917
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7780336
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "required_panic_strategy",
+            "time": {
+                "secs": 0,
+                "nanos": 26709
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 19915
+            },
+            "number_of_cache_misses": 231,
+            "number_of_cache_hits": 0,
+            "invocation_count": 231,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_persist_result_cache",
+            "time": {
+                "secs": 0,
+                "nanos": 90043583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 282416
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "entry_fn",
+            "time": {
+                "secs": 0,
+                "nanos": 632458
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 525369
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 41
+            }
+        },
+        {
+            "label": "metadata_decode_entry_inferred_outlives_of",
+            "time": {
+                "secs": 0,
+                "nanos": 2125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2125
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "encode_query_results",
+            "time": {
+                "secs": 0,
+                "nanos": 26718625
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15870
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "upstream_monomorphizations_for",
+            "time": {
+                "secs": 0,
+                "nanos": 55725583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7482625
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "output_filenames",
+            "time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1083
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1083
+            }
+        },
+        {
+            "label": "opt_hir_owner_nodes",
+            "time": {
+                "secs": 0,
+                "nanos": 114067
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 114067
+            },
+            "number_of_cache_misses": 3918,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3918,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "cgu_partitioning",
+            "time": {
+                "secs": 0,
+                "nanos": 21402916
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 3167
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_exported_symbols",
+            "time": {
+                "secs": 0,
+                "nanos": 37139626
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 37139626
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_visibility",
+            "time": {
+                "secs": 0,
+                "nanos": 1879
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1879
+            },
+            "number_of_cache_misses": 25,
+            "number_of_cache_hits": 0,
+            "invocation_count": 25,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "exported_symbols",
+            "time": {
+                "secs": 0,
+                "nanos": 37164422
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 24796
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 1542
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "unused_lib_feature_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 13250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6708
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_module_children",
+            "time": {
+                "secs": 0,
+                "nanos": 6496874
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6496874
+            },
+            "number_of_cache_misses": 459,
+            "number_of_cache_hits": 0,
+            "invocation_count": 459,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "drop_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 792708
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 792708
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "dep_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 90287
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 60650
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 26454
+            }
+        },
+        {
+            "label": "check_expectations",
+            "time": {
+                "secs": 0,
+                "nanos": 2982708
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 28834
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 500
+            }
+        },
+        {
+            "label": "is_private_dep",
+            "time": {
+                "secs": 0,
+                "nanos": 188796
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 157954
+            },
+            "number_of_cache_misses": 270,
+            "number_of_cache_hits": 0,
+            "invocation_count": 270,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 27203
+            }
+        },
+        {
+            "label": "check_hidden_glob_reexports",
+            "time": {
+                "secs": 0,
+                "nanos": 87542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 87542
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_load_macro",
+            "time": {
+                "secs": 0,
+                "nanos": 278080
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 278080
+            },
+            "number_of_cache_misses": 39,
+            "number_of_cache_hits": 0,
+            "invocation_count": 39,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "serialize_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 91322291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5333
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "size_estimate",
+            "time": {
+                "secs": 0,
+                "nanos": 1603262
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1603262
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 1603262
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "layout_of",
+            "time": {
+                "secs": 0,
+                "nanos": 9791
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9791
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "write_crate_metadata",
+            "time": {
+                "secs": 0,
+                "nanos": 93334
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 93334
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "lint_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 1229250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4084
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "coroutine_obligations",
+            "time": {
+                "secs": 0,
+                "nanos": 28875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 28582
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_type_of",
+            "time": {
+                "secs": 0,
+                "nanos": 449068
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 449068
+            },
+            "number_of_cache_misses": 549,
+            "number_of_cache_hits": 0,
+            "invocation_count": 549,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "trait_def",
+            "time": {
+                "secs": 0,
+                "nanos": 6584
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1084
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_panic_in_drop_strategy",
+            "time": {
+                "secs": 0,
+                "nanos": 6044
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6044
+            },
+            "number_of_cache_misses": 229,
+            "number_of_cache_hits": 0,
+            "invocation_count": 229,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "cgu_partitioning_merge_cgus",
+            "time": {
+                "secs": 0,
+                "nanos": 15666
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15666
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_no_builtins",
+            "time": {
+                "secs": 0,
+                "nanos": 27039
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 19794
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "shallow_lint_levels_on",
+            "time": {
+                "secs": 0,
+                "nanos": 2307104
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2258226
+            },
+            "number_of_cache_misses": 3918,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3918,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "abi_testing",
+            "time": {
+                "secs": 0,
+                "nanos": 1541
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1541
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crates",
+            "time": {
+                "secs": 0,
+                "nanos": 20791
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 20749
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 12291
+            }
+        },
+        {
+            "label": "metadata_decode_entry_crate_hash",
+            "time": {
+                "secs": 0,
+                "nanos": 25618
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 25618
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "write_allocator_module",
+            "time": {
+                "secs": 0,
+                "nanos": 132958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 131875
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "panic_in_drop_strategy",
+            "time": {
+                "secs": 0,
+                "nanos": 21916
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15872
+            },
+            "number_of_cache_misses": 229,
+            "number_of_cache_hits": 0,
+            "invocation_count": 229,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_explicit_predicates_of",
+            "time": {
+                "secs": 0,
+                "nanos": 10708
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 10708
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "link_binary_check_files_are_writeable",
+            "time": {
+                "secs": 0,
+                "nanos": 2231583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2231583
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "needs_drop_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 768291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 33581
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "maybe_unused_trait_imports",
+            "time": {
+                "secs": 0,
+                "nanos": 3125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 3125
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 2417
+            }
+        },
+        {
+            "label": "implementations_of_trait",
+            "time": {
+                "secs": 0,
+                "nanos": 214665
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 60983
+            },
+            "number_of_cache_misses": 807,
+            "number_of_cache_hits": 0,
+            "invocation_count": 807,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_encode_dep_graph_finish",
+            "time": {
+                "secs": 0,
+                "nanos": 72959
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 72959
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "stability_index",
+            "time": {
+                "secs": 0,
+                "nanos": 2438500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1950921
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 15166
+            }
+        },
+        {
+            "label": "local_def_id_to_hir_id",
+            "time": {
+                "secs": 0,
+                "nanos": 205412
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 205412
+            },
+            "number_of_cache_misses": 6793,
+            "number_of_cache_hits": 0,
+            "invocation_count": 6793,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "debugger_visualizers",
+            "time": {
+                "secs": 0,
+                "nanos": 636917
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 636792
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1041
+            }
+        },
+        {
+            "label": "LLVM_module_codegen_emit_obj",
+            "time": {
+                "secs": 0,
+                "nanos": 1179458
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1179458
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "eval_static_initializer",
+            "time": {
+                "secs": 0,
+                "nanos": 714305
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 714305
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 714305
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "evaluate_obligation",
+            "time": {
+                "secs": 0,
+                "nanos": 811917
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 112498
+            },
+            "number_of_cache_misses": 5,
+            "number_of_cache_hits": 0,
+            "invocation_count": 5,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "diagnostic_items",
+            "time": {
+                "secs": 0,
+                "nanos": 160627
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 98587
+            },
+            "number_of_cache_misses": 266,
+            "number_of_cache_hits": 0,
+            "invocation_count": 266,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "codegen_fn_attrs",
+            "time": {
+                "secs": 0,
+                "nanos": 1122727
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 548591
+            },
+            "number_of_cache_misses": 4217,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4217,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 224250
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_reachable_non_generics",
+            "time": {
+                "secs": 0,
+                "nanos": 36250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 26625
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "looking_for_entry_point",
+            "time": {
+                "secs": 0,
+                "nanos": 59416709
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 242299
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "link",
+            "time": {
+                "secs": 0,
+                "nanos": 733390125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2001
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "symbol_name",
+            "time": {
+                "secs": 0,
+                "nanos": 3484302
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 3484302
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 3484302
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "def_span",
+            "time": {
+                "secs": 0,
+                "nanos": 1543124
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1617169
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 1543124
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 74045
+            }
+        },
+        {
+            "label": "cross_crate_inlinable",
+            "time": {
+                "secs": 0,
+                "nanos": 335790
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 277021
+            },
+            "number_of_cache_misses": 1120,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1120,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_copy_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 506542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 11708
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "check_lint_expectations",
+            "time": {
+                "secs": 0,
+                "nanos": 2988292
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5584
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "resolve_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 74041084
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5791
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "postorder_cnums",
+            "time": {
+                "secs": 0,
+                "nanos": 216542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 216458
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 15874
+            }
+        },
+        {
+            "label": "assert_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 291
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 291
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "link_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 722432541
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 298583
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_reachable_non_generic",
+            "time": {
+                "secs": 0,
+                "nanos": 224741
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 187950
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 167491
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_persist_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 1273042
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1273042
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "source_span",
+            "time": {
+                "secs": 0,
+                "nanos": 1811434
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1560159
+            },
+            "number_of_cache_misses": 3938,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3938,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1019939
+            }
+        },
+        {
+            "label": "expand_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 180684583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 65437847
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_query_cache_promotion",
+            "time": {
+                "secs": 0,
+                "nanos": 56905167
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 20975918
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "AST_validation",
+            "time": {
+                "secs": 0,
+                "nanos": 2733459
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2733459
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "MIR_borrow_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 10437583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5122077
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "hir_crate_items",
+            "time": {
+                "secs": 0,
+                "nanos": 2271625
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1862299
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 87126
+            }
+        },
+        {
+            "label": "resolve_check_unused",
+            "time": {
+                "secs": 0,
+                "nanos": 1110083
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1110083
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_load_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 17695542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 17695542
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_defined_lang_items",
+            "time": {
+                "secs": 0,
+                "nanos": 41669
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 41669
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "def_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 945319
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1319159
+            },
+            "number_of_cache_misses": 8247,
+            "number_of_cache_hits": 0,
+            "invocation_count": 8247,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 700502
+            }
+        },
+        {
+            "label": "registered_tools",
+            "time": {
+                "secs": 0,
+                "nanos": 13917
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 13833
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 6249
+            }
+        },
+        {
+            "label": "resolve_main",
+            "time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 209
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "check_private_in_public",
+            "time": {
+                "secs": 0,
+                "nanos": 4166625
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2067089
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 499
+            }
+        },
+        {
+            "label": "attrs_for_def",
+            "time": {
+                "secs": 0,
+                "nanos": 173333
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7749
+            },
+            "number_of_cache_misses": 36,
+            "number_of_cache_hits": 0,
+            "invocation_count": 36,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "upstream_monomorphizations",
+            "time": {
+                "secs": 0,
+                "nanos": 48242958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 11089703
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_encode_dep_graph",
+            "time": {
+                "secs": 0,
+                "nanos": 53351129
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 53351129
+            },
+            "number_of_cache_misses": 622756,
+            "number_of_cache_hits": 0,
+            "invocation_count": 622756,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "finalize_macro_resolutions",
+            "time": {
+                "secs": 0,
+                "nanos": 1813334
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1783416
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_implementations_of_trait",
+            "time": {
+                "secs": 0,
+                "nanos": 153682
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 153682
+            },
+            "number_of_cache_misses": 807,
+            "number_of_cache_hits": 0,
+            "invocation_count": 807,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "coherence_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 27178125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 12073205
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "copy_all_cgu_workproducts_to_incr_comp_cache_dir",
+            "time": {
+                "secs": 0,
+                "nanos": 59291750
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 59291750
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "dependency_formats",
+            "time": {
+                "secs": 0,
+                "nanos": 256541
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 158748
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "compute_effective_visibilities",
+            "time": {
+                "secs": 0,
+                "nanos": 1011750
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1011750
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "extern_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 2500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2124
+            },
+            "number_of_cache_misses": 4,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 625
+            }
+        },
+        {
+            "label": "maybe_create_a_macro_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 2583
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2583
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "effective_visibilities",
+            "time": {
+                "secs": 0,
+                "nanos": 5544500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 3009613
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 35708
+            }
+        },
+        {
+            "label": "metadata_decode_entry_cross_crate_inlinable",
+            "time": {
+                "secs": 0,
+                "nanos": 58769
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 58769
+            },
+            "number_of_cache_misses": 739,
+            "number_of_cache_hits": 0,
+            "invocation_count": 739,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "LLVM_module_codegen",
+            "time": {
+                "secs": 0,
+                "nanos": 1217542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 38084
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "resolve_report_errors",
+            "time": {
+                "secs": 0,
+                "nanos": 292
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 292
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "collect_and_partition_mono_items",
+            "time": {
+                "secs": 0,
+                "nanos": 147151500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1405666
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 569666
+            }
+        },
+        {
+            "label": "get_lang_items",
+            "time": {
+                "secs": 0,
+                "nanos": 2082375
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1621111
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 5209
+            }
+        },
+        {
+            "label": "upstream_drop_glue_for",
+            "time": {
+                "secs": 0,
+                "nanos": 56133500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 407917
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "monomorphization_collector",
+            "time": {
+                "secs": 0,
+                "nanos": 111148292
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1367292
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_is_compiler_builtins",
+            "time": {
+                "secs": 0,
+                "nanos": 6414
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6414
+            },
+            "number_of_cache_misses": 231,
+            "number_of_cache_hits": 0,
+            "invocation_count": 231,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_symbol_mangling_version",
+            "time": {
+                "secs": 0,
+                "nanos": 84
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 84
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "symbol_mangling_version",
+            "time": {
+                "secs": 0,
+                "nanos": 1584
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1500
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "monomorphization_collector_root_collections",
+            "time": {
+                "secs": 0,
+                "nanos": 5527875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1471971
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "allocator_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 834
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 126
+            }
+        },
+        {
+            "label": "MIR_coroutine_by_move_body",
+            "time": {
+                "secs": 0,
+                "nanos": 1514792
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 633307
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_trait_def",
+            "time": {
+                "secs": 0,
+                "nanos": 5500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5500
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "expand_proc_macro",
+            "time": {
+                "secs": 0,
+                "nanos": 79129037
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 79129037
+            },
+            "number_of_cache_misses": 187,
+            "number_of_cache_hits": 0,
+            "invocation_count": 187,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "privacy_checking_modules",
+            "time": {
+                "secs": 0,
+                "nanos": 373042
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 170581
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "crate_name",
+            "time": {
+                "secs": 0,
+                "nanos": 38618
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 23949
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1583
+            }
+        },
+        {
+            "label": "finish_ongoing_codegen",
+            "time": {
+                "secs": 0,
+                "nanos": 59312458
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5916
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_def_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 326662
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 326662
+            },
+            "number_of_cache_misses": 8247,
+            "number_of_cache_hits": 0,
+            "invocation_count": 8247,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "module_lints",
+            "time": {
+                "secs": 0,
+                "nanos": 1224666
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 351899
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "extern_mod_stmt_cnum",
+            "time": {
+                "secs": 0,
+                "nanos": 3999
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 3750
+            },
+            "number_of_cache_misses": 8,
+            "number_of_cache_hits": 0,
+            "invocation_count": 8,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1669
+            }
+        },
+        {
+            "label": "partition_and_assert_distinct_symbols",
+            "time": {
+                "secs": 0,
+                "nanos": 34597417
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4584
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "find_cgu_reuse",
+            "time": {
+                "secs": 0,
+                "nanos": 10269500
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5037194
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "resolve_instance_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 783670
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 14463
+            },
+            "number_of_cache_misses": 28,
+            "number_of_cache_hits": 0,
+            "invocation_count": 28,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "eval_to_const_value_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 770519
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 770519
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 770519
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "alloc_error_handler_kind",
+            "time": {
+                "secs": 0,
+                "nanos": 1083
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1041
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 250
+            }
+        },
+        {
+            "label": "global_backend_features",
+            "time": {
+                "secs": 0,
+                "nanos": 8334
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 8292
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 167
+            }
+        },
+        {
+            "label": "run_linker",
+            "time": {
+                "secs": 0,
+                "nanos": 699883916
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 699883916
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "complete_gated_feature_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 889292
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 840629
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "missing_lang_items",
+            "time": {
+                "secs": 0,
+                "nanos": 64746
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 22783
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "link_binary",
+            "time": {
+                "secs": 0,
+                "nanos": 722133958
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9705209
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "instantiate_and_check_impossible_predicates",
+            "time": {
+                "secs": 0,
+                "nanos": 722376
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 294561
+            },
+            "number_of_cache_misses": 757,
+            "number_of_cache_hits": 0,
+            "invocation_count": 757,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_is_no_builtins",
+            "time": {
+                "secs": 0,
+                "nanos": 7245
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7245
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "rust_target_features",
+            "time": {
+                "secs": 0,
+                "nanos": 4542
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4542
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 1458
+            }
+        },
+        {
+            "label": "stability_implications",
+            "time": {
+                "secs": 0,
+                "nanos": 4333
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 4333
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "param_env_normalized_for_post_analysis",
+            "time": {
+                "secs": 0,
+                "nanos": 2236135
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 358646
+            },
+            "number_of_cache_misses": 1410,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1410,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_register_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 161245791
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 42731166
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_crate_name",
+            "time": {
+                "secs": 0,
+                "nanos": 16252
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 16252
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "predicates_of",
+            "time": {
+                "secs": 0,
+                "nanos": 791401
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 777276
+            },
+            "number_of_cache_misses": 2,
+            "number_of_cache_hits": 0,
+            "invocation_count": 2,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 767318
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_load_query_result_cache",
+            "time": {
+                "secs": 0,
+                "nanos": 2240125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2240125
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "resolutions",
+            "time": {
+                "secs": 0,
+                "nanos": 667
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 626
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 84
+            }
+        },
+        {
+            "label": "items_of_instance",
+            "time": {
+                "secs": 0,
+                "nanos": 12971279
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 12971279
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 12971279
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "defaultness",
+            "time": {
+                "secs": 0,
+                "nanos": 6836
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 5836
+            },
+            "number_of_cache_misses": 52,
+            "number_of_cache_hits": 0,
+            "invocation_count": 52,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "join_worker_thread",
+            "time": {
+                "secs": 0,
+                "nanos": 14792
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 14792
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "adt_destructor",
+            "time": {
+                "secs": 0,
+                "nanos": 320041
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 7126
+            },
+            "number_of_cache_misses": 46,
+            "number_of_cache_hits": 0,
+            "invocation_count": 46,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 2498
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "reveal_opaque_types_in_bounds",
+            "time": {
+                "secs": 0,
+                "nanos": 1250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 1250
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "finalize_imports",
+            "time": {
+                "secs": 0,
+                "nanos": 662125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 662125
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "looking_for_derive_registrar",
+            "time": {
+                "secs": 0,
+                "nanos": 19584
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 6625
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "MIR_effect_checking",
+            "time": {
+                "secs": 0,
+                "nanos": 4130125
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 2142003
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "late_resolve_crate",
+            "time": {
+                "secs": 0,
+                "nanos": 68152458
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 51771818
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "visibility",
+            "time": {
+                "secs": 0,
+                "nanos": 7041
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 531194
+            },
+            "number_of_cache_misses": 25,
+            "number_of_cache_hits": 0,
+            "invocation_count": 25,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 526032
+            }
+        },
+        {
+            "label": "hir_attrs",
+            "time": {
+                "secs": 0,
+                "nanos": 107703
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 107703
+            },
+            "number_of_cache_misses": 3918,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3918,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "analysis",
+            "time": {
+                "secs": 0,
+                "nanos": 136673709
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9710
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 125
+            }
+        },
+        {
+            "label": "<unknown>",
+            "time": {
+                "secs": 0,
+                "nanos": 35936582
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 35931207
+            },
+            "number_of_cache_misses": 4,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 35929249
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "foreign_modules",
+            "time": {
+                "secs": 0,
+                "nanos": 19416
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 19416
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "trait_impls_of",
+            "time": {
+                "secs": 0,
+                "nanos": 861042
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 646377
+            },
+            "number_of_cache_misses": 3,
+            "number_of_cache_hits": 0,
+            "invocation_count": 3,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "incr_comp_finalize_session_directory",
+            "time": {
+                "secs": 0,
+                "nanos": 9750834
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 9750834
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "link_binary_remove_temps",
+            "time": {
+                "secs": 0,
+                "nanos": 10313250
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 10313250
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "param_env",
+            "time": {
+                "secs": 0,
+                "nanos": 1876239
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 614314
+            },
+            "number_of_cache_misses": 1410,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1410,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_codegen_fn_attrs",
+            "time": {
+                "secs": 0,
+                "nanos": 579511
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 579511
+            },
+            "number_of_cache_misses": 4221,
+            "number_of_cache_hits": 0,
+            "invocation_count": 4221,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_explicit_implied_predicates_of",
+            "time": {
+                "secs": 0,
+                "nanos": 875
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 875
+            },
+            "number_of_cache_misses": 1,
+            "number_of_cache_hits": 0,
+            "invocation_count": 1,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "is_panic_runtime",
+            "time": {
+                "secs": 0,
+                "nanos": 26459
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 19582
+            },
+            "number_of_cache_misses": 270,
+            "number_of_cache_hits": 0,
+            "invocation_count": 270,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "eval_to_allocation_raw",
+            "time": {
+                "secs": 0,
+                "nanos": 21874
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 21874
+            },
+            "number_of_cache_misses": 0,
+            "number_of_cache_hits": 0,
+            "invocation_count": 0,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 21874
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_is_private_dep",
+            "time": {
+                "secs": 0,
+                "nanos": 15671
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15671
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        },
+        {
+            "label": "metadata_decode_entry_used_crate_source",
+            "time": {
+                "secs": 0,
+                "nanos": 15169
+            },
+            "self_time": {
+                "secs": 0,
+                "nanos": 15169
+            },
+            "number_of_cache_misses": 269,
+            "number_of_cache_hits": 0,
+            "invocation_count": 269,
+            "blocked_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_load_time": {
+                "secs": 0,
+                "nanos": 0
+            },
+            "incremental_hashing_time": {
+                "secs": 0,
+                "nanos": 0
+            }
+        }
+    ],
+    "artifact_sizes": [
+        {
+            "label": "cgu_instructions",
+            "value": 10
+        },
+        {
+            "label": "codegen_unit_size_estimate",
+            "value": 169036
+        },
+        {
+            "label": "dep_graph",
+            "value": 33573594
+        },
+        {
+            "label": "linked_artifact",
+            "value": 300763941
+        },
+        {
+            "label": "object_file",
+            "value": 830
+        },
+        {
+            "label": "query_cache",
+            "value": 15452203
+        },
+        {
+            "label": "work_product_index",
+            "value": 17691
+        }
+    ],
+    "total_time": {
+        "secs": 2,
+        "nanos": 7116629
+    }
+}
