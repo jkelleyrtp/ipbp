@@ -7,7 +7,7 @@ fn main() {
     dioxus::launch(app);
 }
 
-#[binary_patch::patched]
+// #[binary_patch::patched]
 fn app() -> Element {
     rsx! {
         zoom_controls {}
@@ -50,6 +50,7 @@ fn zoom_controls() -> Element {
             Child { a: 123, b: "hello!?" }
             Child2 {}
             Child2 {}
+            NewKid {}
             for i in 0..count() {
                 div { "You wow that's insane it works {i} {i} {i * 2} times" }
                 button {
@@ -59,15 +60,15 @@ fn zoom_controls() -> Element {
                     "Zoom in!!!"
                 }
             }
-            NewKid {}
         }
     }
 }
 
+//
 #[component]
 fn NewKid() -> Element {
     rsx! {
-        div { "NewKid!" }
+        div { "NewKidoo!" }
     }
 }
 

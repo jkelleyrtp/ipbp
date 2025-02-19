@@ -123,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
             output.with_file_name(format!("output-{}", now.elapsed().unwrap().as_millis()));
         std::fs::copy(&output, &output_temp).unwrap();
 
-        // println!("output: {:?}", output_temp);
+        println!("output: {:?}", output_temp);
 
         // write the new object file to the stdin of the app
         app_stdin

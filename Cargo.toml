@@ -21,7 +21,7 @@ syn = "2.0"
 quote = "1.0"
 proc-macro2 = "1.0"
 dioxus = { path = "../../dioxus/packages/dioxus" }
-object = { version = "=0.36.5", features = ["all"] }
+object = { version = "0.36.0", features = ["all"] }
 
 [profile.dev]
 debug = 0
