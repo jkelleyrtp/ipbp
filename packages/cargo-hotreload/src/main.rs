@@ -151,6 +151,9 @@ async fn link(action: String) -> anyhow::Result<()> {
                 .filter(|arg| arg != "-Wl,-dead_strip")
                 .collect::<Vec<String>>();
 
+            let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
+            cache_incrementals(object_files.as_ref());
+
             // Run ld with the args
             let res = Command::new("cc").args(args).output().await?;
             let err = String::from_utf8_lossy(&res.stderr);
@@ -166,8 +169,15 @@ async fn link(action: String) -> anyhow::Result<()> {
             // std::fs::create_dir_all(&hotreload_dir).unwrap();
             let index_of_out = args.iter().position(|arg| arg == "-o").unwrap();
             let out_file = args[index_of_out + 1].clone();
-            let object_files = args.iter().filter(|arg| arg.ends_with(".o"));
+            let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
 
+            cache_incrementals(object_files.as_ref());
+
+            // -O0 ? supposedly faster
+            // -reproducible - even better?
+            // -exported_symbol and friends - could help with dead-code stripping
+            // -e symbol_name - for setting the entrypoint
+            // -keep_relocs ?
             let res = Command::new("cc")
                 .args(object_files)
                 .arg("-dylib")
@@ -175,12 +185,14 @@ async fn link(action: String) -> anyhow::Result<()> {
                 .arg("dynamic_lookup")
                 .arg("-arch")
                 .arg("arm64")
+                .arg("-dead_strip") // maybe?
                 .arg("-o")
                 .arg(&out_file)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .output()
                 .await?;
+
             let err = String::from_utf8_lossy(&res.stderr);
             std::fs::write(workspace_root().join("link_errs.txt"), &*err).unwrap();
         }
@@ -189,6 +201,20 @@ async fn link(action: String) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn cache_incrementals(object_files: &[&String]) {
+    let incr_dir = workspace_root().join("data").join("incremental");
+    std::fs::remove_dir_all(&incr_dir).unwrap();
+    std::fs::create_dir_all(&incr_dir).unwrap();
+    for o in object_files.iter() {
+        if !o.ends_with(".rcgu.o") {
+            continue;
+        }
+
+        let path = PathBuf::from(o);
+        std::fs::copy(&path, incr_dir.join(path.file_name().unwrap())).unwrap();
+    }
 }
 
 fn workspace_root() -> PathBuf {

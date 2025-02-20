@@ -7,7 +7,7 @@ fn main() {
     dioxus::launch(app);
 }
 
-// #[binary_patch::patched]
+#[binary_patch::patched]
 fn app() -> Element {
     rsx! {
         zoom_controls {}
@@ -19,7 +19,7 @@ fn zoom_controls() -> Element {
 
     rsx! {
         div {
-            h1 { "Rust VIBE CODING" }
+            h1 { "Rust VIBE CODING it!!" }
             em { "powered by 123" }
             h2 { "Dioxus Binary Patching 💪" }
             button {
@@ -50,7 +50,7 @@ fn zoom_controls() -> Element {
             Child { a: 123, b: "hello!?" }
             Child2 {}
             Child2 {}
-            NewKid {}
+            // NewKid {}
             for i in 0..count() {
                 div { "You wow that's insane it works {i} {i} {i * 2} times" }
                 button {
@@ -65,12 +65,12 @@ fn zoom_controls() -> Element {
 }
 
 //
-#[component]
-fn NewKid() -> Element {
-    rsx! {
-        div { "NewKidoo!" }
-    }
-}
+// #[component]
+// fn NewKid() -> Element {
+//     rsx! {
+//         div { "NewKidoo!" }
+//     }
+// }
 
 static MyGlobal: GlobalSignal<i32> = GlobalSignal::new(|| 0);
 

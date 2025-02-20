@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.96"
 gimli = "0.31.1"
 object = { workspace = true }
+pretty_assertions = "1.4.1"
