@@ -592,3 +592,33 @@ fn dump_file(
 //         e.is_definition()
 //     );
 // }
+
+// fn ensure_masking_works() {
+//     let mut relocated_data = data.to_vec();
+
+//     // undo the relocations by writing dumb bytes
+//     for (r_addr, reloc) in cur_relocs.iter() {
+//         assert!(reloc.size() == 32, "we suport only 32 bit relocs");
+
+//         let r_addr = *r_addr as usize - sym.address() as usize;
+//         relocated_data[r_addr as usize..r_addr as usize + 4]
+//             .copy_from_slice(&0x70707070_i32.to_be_bytes());
+//     }
+
+//     // Make sure our masking is correct
+//     let matche = compare_masked(
+//         &new_,
+//         &new_,
+//         ComparedSymbol {
+//             offset: sym.address() as usize,
+//             data: &data,
+//             relocations: &cur_relocs,
+//         },
+//         ComparedSymbol {
+//             offset: sym.address() as usize,
+//             data: &relocated_data,
+//             relocations: &cur_relocs,
+//         },
+//     );
+//     assert!(matche);
+// }

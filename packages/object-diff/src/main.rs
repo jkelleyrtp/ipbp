@@ -15,9 +15,9 @@ use std::{
 use itertools::Itertools;
 use object::{
     macho::MachHeader64,
-    read::macho::{MachOSymbol, Nlist},
-    Endianness, File, Object, ObjectSection, ObjectSegment, ObjectSymbol, ObjectSymbolTable,
-    ReadRef, Relocation, RelocationTarget, SectionIndex, SymbolIndex,
+    read::macho::{MachOFile, MachOSection, MachOSymbol, Nlist},
+    Endianness, Export, File, Import, Object, ObjectSection, ObjectSegment, ObjectSymbol,
+    ObjectSymbolTable, ReadRef, Relocation, RelocationTarget, SectionIndex, SymbolIndex,
 };
 use pretty_assertions::Comparison;
 use pretty_hex::{Hex, HexConfig};
@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
     let left = read_dir_to_objects(&workspace_dir().join("data").join("incremental-old"));
     let right = read_dir_to_objects(&workspace_dir().join("data").join("incremental-new"));
 
-    //
+    // for now, assume cgu puts things into the same files. need to break that assumption eventually
     for right in right.into_iter().nth(12) {
         let Some(left) = left.iter().find(|l| l.file_name() == right.file_name()) else {
             println!("no left for {right:?}");
@@ -49,134 +49,75 @@ fn main() -> anyhow::Result<()> {
             panic!()
         };
 
-        let exports = new_
-            .exports()
-            .unwrap()
-            .iter()
-            .map(|e| (e.name().to_utf8(), *e))
-            // .map(|e| (e.address(), *e))
-            .collect::<HashMap<_, _>>();
-        let imports = new_
-            .imports()
-            .unwrap()
-            .iter()
-            .map(|i| i.name().to_utf8())
-            .collect::<HashSet<_>>();
-        // let imports = new_.symbol_map().get(address)
-        // let imports = new_
-        //     .imports()
-        //     .unwrap()
-        //     .iter()
-        //     .map(|i| (i.address(), *i))
-        //     .collect();
-        // let exports = new_
-        //     .exports()
-        //     .unwrap()
-        //     .iter()
-        //     .map(|e| e.name().to_utf8())
-        //     .collect::<HashSet<_>>();
+        let new = Computed::new(&new_);
+        let old = Computed::new(&old_);
 
-        // Find our functions
-        let text = new_
-            .sections()
-            .find(|s| s.name_bytes() == Ok(b"__text"))
-            .unwrap();
-        let text_length = text.size();
-        let text_data = text.data().unwrap();
-        let mut relocations = text.relocations().collect::<VecDeque<_>>();
-        let mut saved_data = text.data().unwrap().to_vec();
+        let text_length = new.text.size();
+        let text_data = new.text.data().unwrap();
+        let mut new_relocations = new.text.relocations().peekable();
+        let mut old_relocations = old.text.relocations().peekable();
 
+        // We use the new symbols as our "ordinal" - and we'll look up the old symbols by name
         let sorted_symbols = new_
             .symbols()
-            .filter(|s| s.section_index() == Some(text.index()))
-            .sorted_by(stable_sort_symbols);
+            .filter(|s| s.section_index() == Some(new.text.index()))
+            .sorted_by(stable_sort_symbols)
+            .collect::<Vec<_>>();
+
+        // The old symbols will be looked up by name
+        // If internal naming changes (ie new l___temp_1 from the compiler) then this might break
+        // It's okay here to generate more false positives than false negatives - we'd prefer to include a symbol even if it changed only slightly
+        let old_symbols = old_
+            .symbols()
+            .filter(|s| s.section_index() == Some(old.text.index()))
+            .map(|s| (s.name().unwrap(), s))
+            .collect::<HashMap<_, _>>();
 
         // Walk the symbols in the text section and print the relocations per symbol
         // eventually this will need to include other sections?
         // We're going backwards so we can use the text_length as the initial backstop
-        let mut last = text_length as usize;
+        let mut func_end = text_length as usize;
         for sym in sorted_symbols.into_iter().rev() {
-            // for sym in sorted_symbols.into_iter().rev() {
             // Only walk the symbols in the text section for now...
-            if !(sym.section_index() == Some(text.index())) {
+            if !(sym.section_index() == Some(new.text.index())) {
                 continue;
             }
 
-            let mut cur_relocs = vec![];
+            // Get the old symbol - if it doesn't exist then (todo) we should save this symbol
+            let Some(old_sym) = old_symbols.get(&sym.name().unwrap()) else {
+                println!("no old symbol for {sym:?}");
+                continue;
+            };
 
-            loop {
-                let Some((r_addr, reloc)) = relocations.front() else {
-                    break;
-                };
-
-                if *r_addr < sym.address() {
-                    break;
-                }
-
-                let (r_addr, reloc) = relocations.pop_front().unwrap();
-                cur_relocs.push((r_addr, reloc));
-            }
-
-            let is_exported = exports.contains_key(&sym.name().unwrap());
-            let range = sym.address() as usize..last;
+            let new_name = sym.name().unwrap();
+            let is_exported = new.exports.contains_key(&new_name);
+            let range = sym.address() as usize..func_end;
             let data = &text_data[range.clone()];
-            let mut relocated_data = data.to_vec();
-
-            // undo the relocations by writing dumb bytes
-            for (r_addr, reloc) in cur_relocs.iter() {
-                if reloc.size() == 32 {
-                    let r_addr = *r_addr as usize - sym.address() as usize;
-                    relocated_data[r_addr as usize..r_addr as usize + 4]
-                        .copy_from_slice(&0x70707070_i32.to_be_bytes());
-                } else {
-                    panic!()
-                }
-            }
-
-            // Make sure our masking is correct
-            let matche = compare_masked(
-                &new_,
-                &new_,
-                ComparedSymbol {
-                    offset: sym.address() as usize,
-                    data: &data,
-                    relocations: &cur_relocs,
-                },
-                ComparedSymbol {
-                    offset: sym.address() as usize,
-                    data: &relocated_data,
-                    relocations: &cur_relocs,
-                },
-            );
-            assert!(matche);
-
-            let pretty = pretty_hex::config_hex(
-                &relocated_data,
-                // &data,
-                HexConfig {
-                    display_offset: sym.address() as usize,
-                    ..Default::default()
-                },
-            );
 
             println!(
                 "Sym [{} - {}] - {:?}\n{}",
                 sym.address(),
                 if is_exported { "export" } else { "local" },
                 sym.name().unwrap(),
-                pretty // sym.kind(),
+                pretty_hex::config_hex(
+                    &data,
+                    HexConfig {
+                        display_offset: sym.address() as usize,
+                        ..Default::default()
+                    },
+                )
             );
 
-            for (r_addr, reloc) in cur_relocs {
+            while let Some((r_addr, reloc)) = new_relocations.next_if(|r| r.0 >= sym.address()) {
                 let (name, kind) = match reloc.target() {
                     object::RelocationTarget::Symbol(symbol_index) => {
                         let symbol = new_.symbol_by_index(symbol_index).unwrap();
                         (symbol.name_bytes().unwrap(), symbol.kind())
                     }
                     object::RelocationTarget::Section(section_index) => {
-                        continue;
                         // let section = new_.section_by_index(section_index).unwrap();
                         // section.name_bytes().unwrap()
+                        continue;
                     }
                     _ => {
                         b"absolute";
@@ -190,8 +131,8 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 let name = name.to_utf8();
-                let is_import = imports.contains(&name);
-                let is_export = exports.contains_key(&name);
+                let is_import = new.imports.contains_key(&name);
+                let is_export = new.exports.contains_key(&name);
 
                 println!(
                     "{:04x} [{}] {:?} -> {}",
@@ -210,15 +151,72 @@ fn main() -> anyhow::Result<()> {
 
             println!();
 
-            last = sym.address() as usize;
+            func_end = sym.address() as usize;
         }
 
-        assert!(relocations.is_empty());
+        assert!(new_relocations.next().is_none());
 
         println!()
     }
 
     Ok(())
+}
+
+struct Computed<'data, 'file> {
+    file: &'file MachOFile<'data, MachHeader64<Endianness>>,
+    exports: HashMap<&'data str, Export<'data>>,
+    imports: HashMap<&'data str, Import<'data>>,
+    text: MachOSection<'data, 'file, MachHeader64<Endianness>>,
+    text_data: &'data [u8],
+    text_relocations: Vec<(u64, Relocation)>,
+    sorted_functions: Vec<MachOSymbol<'data, 'file, MachHeader64<Endianness>>>,
+}
+
+impl<'data, 'file> Computed<'data, 'file> {
+    fn new(file: &'file MachOFile<'data, MachHeader64<Endianness>>) -> Self {
+        let exports = file
+            .exports()
+            .unwrap()
+            .iter()
+            .map(|e| (e.name().to_utf8(), *e))
+            .collect::<HashMap<_, _>>();
+
+        let imports = file
+            .imports()
+            .unwrap()
+            .iter()
+            .map(|i| (i.name().to_utf8(), *i))
+            .collect::<HashMap<_, _>>();
+
+        // Find our functions - todo - this needs to be done for multiple sections
+        let text = file
+            .sections()
+            .find(|s| s.name_bytes() == Ok(b"__text"))
+            .unwrap();
+
+        // Sort them by their address within the text section - necessary so we can determine boundaries for each symbol
+        let sorted_functions = file
+            .symbols()
+            .filter(|s| s.section_index() == Some(text.index()))
+            .sorted_by(stable_sort_symbols)
+            .collect::<Vec<_>>();
+
+        // Get the relocations for the text section - this will typically be in reverse order
+        // We might need to sort these too?
+        let text_relocations = text.relocations().collect::<Vec<_>>();
+
+        let text_data = text.data().unwrap();
+
+        Self {
+            file,
+            exports,
+            imports,
+            text,
+            text_data,
+            text_relocations,
+            sorted_functions,
+        }
+    }
 }
 
 fn stable_sort_symbols(
@@ -233,18 +231,74 @@ fn stable_sort_symbols(
     }
 }
 
-// /// A symbol with its paired relocations and data
-// struct SymbolWithRelocations<'a> {}
-
-struct Mask<'a> {
-    idx: usize,
-    bytes: &'a [u8],
-}
-
-struct ComparedSymbol<'a> {
+/// A function with its relevant relocations to be used for masked comparisons
+struct RelocatedSymbol<'a> {
+    name: &'a str,
     offset: usize,
     data: &'a [u8],
     relocations: &'a [(u64, Relocation)],
+    sym: &'a MachOSymbol<'a, 'a, MachHeader64<Endianness>>,
+}
+
+fn accumulate_masked_symbols<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<RelocatedSymbol<'a>> {
+    let mut syms = vec![];
+
+    // The end of the currently analyzed function
+    let mut func_end = new.text.size() as usize;
+
+    // The idx into the relocation list that applies to this function. We'll march these
+    let mut reloc_idx = 0;
+
+    // Walk in reverse so we can use the text_length as the initial backstop and to match relocation order
+    for sym in new.sorted_functions.iter().rev() {
+        // Only walk the symbols in the text section for now...
+        if !(sym.section_index() == Some(new.text.index())) {
+            continue;
+        }
+
+        // Move the head/tail to include the sub-slice of the relocations that apply to this symbol
+        let mut reloc_start = None;
+        loop {
+            // If we've reached the end of the relocations then we're done
+            if reloc_idx == new.text_relocations.len() {
+                break;
+            }
+
+            // relocations behind the symbol start don't apply
+            if new.text_relocations[reloc_idx].0 < sym.address() {
+                break;
+            }
+
+            // Set the head to the first relocation that applies
+            if reloc_start.is_none() {
+                reloc_start = Some(reloc_idx);
+            }
+
+            reloc_idx += 1;
+        }
+
+        // Identify the instructions that apply to this symbol
+        let data_range = sym.address() as usize..func_end;
+        let data = &new.text_data[data_range.clone()];
+
+        // Identify the relocations that apply to this symbol
+        let relocations = match reloc_start {
+            Some(start) => &new.text_relocations[start..reloc_idx],
+            None => &[],
+        };
+
+        syms.push(RelocatedSymbol {
+            sym,
+            name: sym.name().unwrap(),
+            offset: sym.address() as usize,
+            data,
+            relocations,
+        });
+
+        func_end = sym.address() as usize;
+    }
+
+    syms
 }
 
 /// Compare two sets of bytes, masking out the bytes that are not part of the symbol
@@ -252,8 +306,8 @@ struct ComparedSymbol<'a> {
 fn compare_masked<'a>(
     old: &impl Object<'a>,
     new: &impl Object<'a>,
-    left: ComparedSymbol,
-    right: ComparedSymbol,
+    left: RelocatedSymbol,
+    right: RelocatedSymbol,
 ) -> bool {
     // Make sure the relocations are the same length
     if left.relocations.len() != right.relocations.len() {
