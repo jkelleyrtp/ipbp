@@ -17,7 +17,7 @@ use object::{
     macho::MachHeader64,
     read::macho::{MachOSymbol, Nlist},
     Endianness, File, Object, ObjectSection, ObjectSegment, ObjectSymbol, ObjectSymbolTable,
-    ReadRef, SectionIndex, SymbolIndex,
+    ReadRef, Relocation, RelocationTarget, SectionIndex, SymbolIndex,
 };
 use pretty_assertions::Comparison;
 use pretty_hex::{Hex, HexConfig};
@@ -102,11 +102,38 @@ fn main() -> anyhow::Result<()> {
                 continue;
             }
 
+            let mut cur_relocs = vec![];
+
+            loop {
+                let Some((r_addr, reloc)) = relocations.front() else {
+                    break;
+                };
+
+                if *r_addr < sym.address() {
+                    break;
+                }
+
+                let (r_addr, reloc) = relocations.pop_front().unwrap();
+                cur_relocs.push((r_addr, reloc));
+            }
+
             let is_exported = exports.contains_key(&sym.name().unwrap());
             let range = sym.address() as usize..last;
             let data = &text_data[range.clone()];
+            let mut relocated_data = data.to_vec();
+
+            // undo the relocations by writing dumb bytes
+            for (r_addr, reloc) in cur_relocs.iter() {
+                if reloc.size() == 32 {
+                    let r_addr = *r_addr as usize - sym.address() as usize;
+                    relocated_data[r_addr as usize..r_addr as usize + 4]
+                        .copy_from_slice(&0x70707070_i32.to_be_bytes());
+                }
+            }
+
             let pretty = pretty_hex::config_hex(
-                &data,
+                &relocated_data,
+                // &data,
                 HexConfig {
                     display_offset: sym.address() as usize,
                     ..Default::default()
@@ -121,34 +148,44 @@ fn main() -> anyhow::Result<()> {
                 pretty // sym.kind(),
             );
 
-            loop {
-                let Some((r_addr, reloc)) = relocations.front() else {
-                    break;
-                };
-
-                if *r_addr < sym.address() {
-                    break;
-                }
-
-                let (r_addr, reloc) = relocations.pop_front().unwrap();
-                let name = match reloc.target() {
+            for (r_addr, reloc) in cur_relocs {
+                let (name, kind) = match reloc.target() {
                     object::RelocationTarget::Symbol(symbol_index) => {
                         let symbol = new_.symbol_by_index(symbol_index).unwrap();
-                        symbol.name_bytes().unwrap()
+                        (symbol.name_bytes().unwrap(), symbol.kind())
                     }
                     object::RelocationTarget::Section(section_index) => {
-                        let section = new_.section_by_index(section_index).unwrap();
-                        section.name_bytes().unwrap()
+                        continue;
+                        // let section = new_.section_by_index(section_index).unwrap();
+                        // section.name_bytes().unwrap()
                     }
-                    _ => b"absolute",
+                    _ => {
+                        b"absolute";
+                        continue;
+                    }
                 };
+
+                // this isn't quite right, I think
+                if kind == object::SymbolKind::Data {
+                    continue;
+                }
+
+                let name = name.to_utf8();
+                let is_import = imports.contains(&name);
+                let is_export = exports.contains_key(&name);
+
                 println!(
-                    "{:04x} {:?} {} implicit: {} -> {}",
+                    "{:04x} [{}] {:?} -> {}",
                     r_addr,
-                    reloc.flags(),
-                    reloc.size(),
-                    reloc.has_implicit_addend(),
-                    std::str::from_utf8(name).unwrap()
+                    if is_import {
+                        "imp"
+                    } else if is_export {
+                        "exp"
+                    } else {
+                        "loc"
+                    },
+                    kind,
+                    name
                 );
             }
 
@@ -185,10 +222,46 @@ struct Mask<'a> {
     bytes: &'a [u8],
 }
 
+struct ComparedSymbol<'a> {
+    offset: usize,
+    data: &'a [u8],
+    relocations: &'a [(u64, Relocation)],
+}
+
 /// Compare two sets of bytes, masking out the bytes that are not part of the symbol
 /// This is so we can compare functions with different relocations
-fn compare_masked(left: &[u8], right: &[u8], masks: &[Mask]) -> bool {
-    todo!()
+fn compare_masked<'a>(
+    old: &impl Object<'a>,
+    new: &impl Object<'a>,
+    left: ComparedSymbol,
+    right: ComparedSymbol,
+) -> bool {
+    // Make sure the relocations are the same length
+    if left.relocations.len() != right.relocations.len() {
+        return false;
+    }
+
+    // Ensure the relocations point to the same symbol
+    // Data symbols are special ... todo
+    for x in 0..left.relocations.len() {
+        // The targets might not be same by index but should resolve to the same *name*
+        let left_target: RelocationTarget = left.relocations[x].1.target();
+        let right_target: RelocationTarget = right.relocations[x].1.target();
+
+        // Use the name of the symbol to compare
+        // todo: decide if it's internal vs external
+        let left_name = name_of_relocation_target(old, left_target);
+        let right_name = name_of_relocation_target(new, right_target);
+
+        // Make sure the names match
+        if left_name != right_name {
+            return false;
+        }
+
+        // todo: more checking... the symbols might be local
+    }
+
+    true
 }
 
 struct CachedObjectFile {
@@ -199,6 +272,20 @@ struct CachedObjectFile {
 type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
 
 // fn make_function_map()
+
+fn name_of_relocation_target<'a>(obj: &impl Object<'a>, target: RelocationTarget) -> &'a str {
+    match target {
+        RelocationTarget::Symbol(symbol_index) => {
+            let symbol = obj.symbol_by_index(symbol_index).unwrap();
+            symbol.name_bytes().unwrap().to_utf8()
+        }
+        RelocationTarget::Section(section_index) => {
+            let section = obj.section_by_index(section_index).unwrap();
+            section.name_bytes().unwrap().to_utf8()
+        }
+        _ => "absolute",
+    }
+}
 
 fn read_dir_to_objects(dir: &Path) -> Vec<PathBuf> {
     std::fs::read_dir(dir)
