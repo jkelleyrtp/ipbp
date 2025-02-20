@@ -27,17 +27,26 @@ mod helper;
 /// Take a stream of object files and decide which symbols to convert to dynamic lookups
 fn main() -> anyhow::Result<()> {
     // Load the object file streams
-    let left = read_dir_to_objects(&workspace_dir().join("data").join("incremental-old"));
-    let right = read_dir_to_objects(&workspace_dir().join("data").join("incremental-new"));
+    let left_files = read_dir_to_objects(&workspace_dir().join("data").join("incremental-old"));
+    let right_files = read_dir_to_objects(&workspace_dir().join("data").join("incremental-new"));
+    let num_left = left_files.len();
+    let num_right = right_files.len();
+
+    let mut matched = 0;
+    let mut mismatched = 0;
+    let mut missing = 0;
 
     // for now, assume cgu puts things into the same files. need to break that assumption eventually
-    for right in right.into_iter().nth(12) {
-        let Some(left) = left.iter().find(|l| l.file_name() == right.file_name()) else {
+    for (idx, right) in right_files.into_iter().enumerate() {
+        let Some(left) = left_files
+            .iter()
+            .find(|l| l.file_name() == right.file_name())
+        else {
             println!("no left for {right:?}");
             continue;
         };
 
-        println!("----- {:?} -----", right.file_name());
+        println!("----- {:?} {}/{} -----", right.file_name(), idx, num_right);
         let left_data = fs::read(&left).unwrap();
         let right_data = fs::read(&right).unwrap();
 
@@ -52,68 +61,52 @@ fn main() -> anyhow::Result<()> {
         let new = Computed::new(&new_);
         let old = Computed::new(&old_);
 
-        let relocated = accumulate_masked_symbols(&new);
-        for r in relocated {
-            let is_exported = new.exports.contains_key(&r.name);
+        let relocated_new = accumulate_masked_symbols(&new);
+        let mut relocated_old = accumulate_masked_symbols(&old)
+            .into_iter()
+            .map(|f| (f.name, f))
+            .collect::<HashMap<_, _>>();
 
-            println!(
-                "Sym [{} - {}] - {:?}\n{}",
-                r.sym.address(),
-                if is_exported { "export" } else { "local" },
-                r.sym.name().unwrap(),
-                pretty_hex::config_hex(
-                    &r.data,
-                    HexConfig {
-                        display_offset: r.sym.address() as usize,
-                        ..Default::default()
-                    },
-                )
-            );
+        for right in relocated_new {
+            let is_exported = new.exports.contains_key(&right.name);
 
-            for (r_addr, reloc) in r.relocations {
-                let (name, kind) = match reloc.target() {
-                    object::RelocationTarget::Symbol(symbol_index) => {
-                        let symbol = new_.symbol_by_index(symbol_index).unwrap();
-                        (symbol.name_bytes().unwrap(), symbol.kind())
-                    }
-                    object::RelocationTarget::Section(section_index) => {
-                        // let section = new_.section_by_index(section_index).unwrap();
-                        // section.name_bytes().unwrap()
-                        continue;
-                    }
-                    _ => {
-                        b"absolute";
-                        continue;
-                    }
-                };
+            // temp assert while in dev
+            let Some(left) = relocated_old.remove(right.name) else {
+                println!("no right for {}", right.name);
+                missing += 1;
+                continue;
+            };
 
-                // this isn't quite right, I think
-                if kind == object::SymbolKind::Data {
-                    continue;
+            match compare_masked(&old_, &new_, &left, &right) {
+                true => {
+                    matched += 1;
+                    // println!("✅ Symbols match")
                 }
-
-                let name = name.to_utf8();
-                let is_import = new.imports.contains_key(&name);
-                let is_export = new.exports.contains_key(&name);
-
-                println!(
-                    "{:04x} [{}] {:?} -> {}",
-                    r_addr,
-                    if is_import {
-                        "imp"
-                    } else if is_export {
-                        "exp"
-                    } else {
-                        "loc"
-                    },
-                    kind,
-                    name
-                );
+                false => {
+                    println!(
+                        "Sym [{} - {}] - {:?}\n{}",
+                        right.sym.address(),
+                        if is_exported { "export" } else { "local" },
+                        right.sym.name().unwrap(),
+                        pretty_hex::config_hex(
+                            &right.data,
+                            HexConfig {
+                                display_offset: right.sym.address() as usize,
+                                ..Default::default()
+                            },
+                        )
+                    );
+                    println!("❌ Symbols do not match");
+                    println!();
+                    mismatched += 1;
+                }
             }
-
-            println!()
         }
     }
+
+    println!("matched: {matched}");
+    println!("mismatched: {mismatched}");
+    println!("missing: {missing}");
 
     Ok(())
 }
@@ -262,8 +255,8 @@ fn accumulate_masked_symbols<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<Relocated
 fn compare_masked<'a>(
     old: &impl Object<'a>,
     new: &impl Object<'a>,
-    left: RelocatedSymbol,
-    right: RelocatedSymbol,
+    left: &RelocatedSymbol,
+    right: &RelocatedSymbol,
 ) -> bool {
     // Make sure the relocations are the same length
     if left.relocations.len() != right.relocations.len() {
@@ -273,6 +266,12 @@ fn compare_masked<'a>(
     // Make sure the data is the same length
     // If the size changed then the instructions are different (well, not necessarily, but enough)
     if left.data.len() != right.data.len() {
+        return false;
+    }
+
+    // Make sure the names match
+    if left.name != right.name {
+        println!("sym name doesn't: {:?} != {:?}", left.name, right.name);
         return false;
     }
 
@@ -300,7 +299,7 @@ fn compare_masked<'a>(
 
         // Make sure the names match
         if left_name != right_name {
-            println!("names don't match: {left_name:?} != {right_name:?}");
+            println!("reloc target doesn't match: {left_name:?} != {right_name:?}");
             return false;
         }
 
@@ -334,20 +333,16 @@ fn compare_masked<'a>(
     true
 }
 
-struct CachedObjectFile {
-    path: PathBuf,
-    exports: HashSet<String>,
-}
-
-type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
-
-// fn make_function_map()
-
 fn name_of_relocation_target<'a>(obj: &impl Object<'a>, target: RelocationTarget) -> &'a str {
     match target {
         RelocationTarget::Symbol(symbol_index) => {
-            let symbol = obj.symbol_by_index(symbol_index).unwrap();
-            symbol.name_bytes().unwrap().to_utf8()
+            let symbol = obj.symbol_by_index(symbol_index);
+
+            if symbol.is_err() {
+                panic!("symbol not found: {symbol_index}");
+            }
+
+            symbol.unwrap().name_bytes().unwrap().to_utf8()
         }
         RelocationTarget::Section(section_index) => {
             let section = obj.section_by_index(section_index).unwrap();
@@ -379,3 +374,57 @@ impl<'a> ToUtf8<'a> for &'a [u8] {
         std::str::from_utf8(self).unwrap()
     }
 }
+
+fn print_relocs(
+    new_: &MachOFile<'_, MachHeader64<Endianness>>,
+    new: &Computed<'_, '_>,
+    r: RelocatedSymbol<'_>,
+) {
+    for (r_addr, reloc) in r.relocations {
+        let (name, kind) = match reloc.target() {
+            object::RelocationTarget::Symbol(symbol_index) => {
+                let symbol = new_.symbol_by_index(symbol_index).unwrap();
+                (symbol.name_bytes().unwrap(), symbol.kind())
+            }
+            object::RelocationTarget::Section(section_index) => {
+                // let section = new_.section_by_index(section_index).unwrap();
+                // section.name_bytes().unwrap()
+                continue;
+            }
+            _ => {
+                b"absolute";
+                continue;
+            }
+        };
+
+        // this isn't quite right, I think
+        if kind == object::SymbolKind::Data {
+            continue;
+        }
+
+        let name = name.to_utf8();
+        let is_import = new.imports.contains_key(&name);
+        let is_export = new.exports.contains_key(&name);
+
+        println!(
+            "{:04x} [{}] {:?} -> {}",
+            r_addr,
+            if is_import {
+                "imp"
+            } else if is_export {
+                "exp"
+            } else {
+                "loc"
+            },
+            kind,
+            name
+        );
+    }
+}
+
+struct CachedObjectFile {
+    path: PathBuf,
+    exports: HashSet<String>,
+}
+
+type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
