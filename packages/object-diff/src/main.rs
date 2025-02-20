@@ -52,63 +52,25 @@ fn main() -> anyhow::Result<()> {
         let new = Computed::new(&new_);
         let old = Computed::new(&old_);
 
-        let text_length = new.text.size();
-        let text_data = new.text.data().unwrap();
-        let mut new_relocations = new.text.relocations().peekable();
-        let mut old_relocations = old.text.relocations().peekable();
-
-        // We use the new symbols as our "ordinal" - and we'll look up the old symbols by name
-        let sorted_symbols = new_
-            .symbols()
-            .filter(|s| s.section_index() == Some(new.text.index()))
-            .sorted_by(stable_sort_symbols)
-            .collect::<Vec<_>>();
-
-        // The old symbols will be looked up by name
-        // If internal naming changes (ie new l___temp_1 from the compiler) then this might break
-        // It's okay here to generate more false positives than false negatives - we'd prefer to include a symbol even if it changed only slightly
-        let old_symbols = old_
-            .symbols()
-            .filter(|s| s.section_index() == Some(old.text.index()))
-            .map(|s| (s.name().unwrap(), s))
-            .collect::<HashMap<_, _>>();
-
-        // Walk the symbols in the text section and print the relocations per symbol
-        // eventually this will need to include other sections?
-        // We're going backwards so we can use the text_length as the initial backstop
-        let mut func_end = text_length as usize;
-        for sym in sorted_symbols.into_iter().rev() {
-            // Only walk the symbols in the text section for now...
-            if !(sym.section_index() == Some(new.text.index())) {
-                continue;
-            }
-
-            // Get the old symbol - if it doesn't exist then (todo) we should save this symbol
-            let Some(old_sym) = old_symbols.get(&sym.name().unwrap()) else {
-                println!("no old symbol for {sym:?}");
-                continue;
-            };
-
-            let new_name = sym.name().unwrap();
-            let is_exported = new.exports.contains_key(&new_name);
-            let range = sym.address() as usize..func_end;
-            let data = &text_data[range.clone()];
+        let relocated = accumulate_masked_symbols(&new);
+        for r in relocated {
+            let is_exported = new.exports.contains_key(&r.name);
 
             println!(
                 "Sym [{} - {}] - {:?}\n{}",
-                sym.address(),
+                r.sym.address(),
                 if is_exported { "export" } else { "local" },
-                sym.name().unwrap(),
+                r.sym.name().unwrap(),
                 pretty_hex::config_hex(
-                    &data,
+                    &r.data,
                     HexConfig {
-                        display_offset: sym.address() as usize,
+                        display_offset: r.sym.address() as usize,
                         ..Default::default()
                     },
                 )
             );
 
-            while let Some((r_addr, reloc)) = new_relocations.next_if(|r| r.0 >= sym.address()) {
+            for (r_addr, reloc) in r.relocations {
                 let (name, kind) = match reloc.target() {
                     object::RelocationTarget::Symbol(symbol_index) => {
                         let symbol = new_.symbol_by_index(symbol_index).unwrap();
@@ -149,14 +111,8 @@ fn main() -> anyhow::Result<()> {
                 );
             }
 
-            println!();
-
-            func_end = sym.address() as usize;
+            println!()
         }
-
-        assert!(new_relocations.next().is_none());
-
-        println!()
     }
 
     Ok(())
