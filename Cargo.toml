@@ -3,11 +3,11 @@ members = [
     # "packages/hr",
     # "packages/patch-linker",
     # "packages/some-lib",
+    # "packages/object-diff",
     "packages/harness",
     "packages/cargo-hotreload",
     "packages/hotreload-macro",
     "packages/binary-patch",
-    "packages/object-diff",
 ]
 resolver = "2"
 

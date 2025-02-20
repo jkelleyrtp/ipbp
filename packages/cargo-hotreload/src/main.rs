@@ -11,6 +11,8 @@ use tokio::{
     time::Instant,
 };
 
+mod diff;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     if let Ok(action) = std::env::var("HOTRELOAD_LINK") {

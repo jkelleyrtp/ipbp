@@ -18,11 +18,10 @@ use object::{
     read::macho::{MachOFile, MachOSection, MachOSymbol, Nlist},
     Endianness, Export, File, Import, Object, ObjectSection, ObjectSegment, ObjectSymbol,
     ObjectSymbolTable, ReadRef, Relocation, RelocationTarget, SectionIndex, SymbolIndex,
+    SymbolKind,
 };
 use pretty_assertions::Comparison;
 use pretty_hex::{Hex, HexConfig};
-
-mod helper;
 
 /// Take a stream of object files and decide which symbols to convert to dynamic lookups
 fn main() -> anyhow::Result<()> {
@@ -36,19 +35,27 @@ fn main() -> anyhow::Result<()> {
     let mut mismatched = 0;
     let mut missing = 0;
 
+    let mut modified_files: HashMap<PathBuf, HashSet<String>> = HashMap::new();
+
     // for now, assume cgu puts things into the same files. need to break that assumption eventually
-    for (idx, right) in right_files.into_iter().enumerate() {
+    for (idx, new_file) in right_files.into_iter().enumerate() {
         let Some(left) = left_files
             .iter()
-            .find(|l| l.file_name() == right.file_name())
+            .find(|l| l.file_name() == new_file.file_name())
         else {
-            println!("no left for {right:?}");
+            println!("no left for {new_file:?}");
+            modified_files.entry(new_file.clone()).or_default();
             continue;
         };
 
-        println!("----- {:?} {}/{} -----", right.file_name(), idx, num_right);
+        println!(
+            "----- {:?} {}/{} -----",
+            new_file.file_name(),
+            idx,
+            num_right
+        );
         let left_data = fs::read(&left).unwrap();
-        let right_data = fs::read(&right).unwrap();
+        let right_data = fs::read(&new_file).unwrap();
 
         let File::MachO64(old_) = object::read::File::parse(&left_data as &[u8]).unwrap() else {
             panic!()
@@ -72,6 +79,12 @@ fn main() -> anyhow::Result<()> {
 
             // temp assert while in dev
             let Some(left) = relocated_old.remove(right.name) else {
+                if right.sym.is_global() {
+                    modified_files
+                        .entry(new_file.clone())
+                        .or_default()
+                        .insert(right.name.to_string());
+                }
                 println!("no right for {}", right.name);
                 missing += 1;
                 continue;
@@ -99,6 +112,12 @@ fn main() -> anyhow::Result<()> {
                     println!("❌ Symbols do not match");
                     println!();
                     mismatched += 1;
+                    if right.sym.is_global() {
+                        modified_files
+                            .entry(new_file.clone())
+                            .or_default()
+                            .insert(right.name.to_string());
+                    }
                 }
             }
         }
@@ -107,6 +126,7 @@ fn main() -> anyhow::Result<()> {
     println!("matched: {matched}");
     println!("mismatched: {mismatched}");
     println!("missing: {missing}");
+    println!("modified: {modified_files:#?}");
 
     Ok(())
 }
@@ -299,6 +319,7 @@ fn compare_masked<'a>(
 
         // Make sure the names match
         if left_name != right_name {
+            // if the target is a locally defined symbol, then it might be the samea
             println!("reloc target doesn't match: {left_name:?} != {right_name:?}");
             return false;
         }
@@ -428,3 +449,18 @@ struct CachedObjectFile {
 }
 
 type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
+
+#[test]
+fn does_have_exports() {
+    let f = "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-df4868ea1b5cadad";
+    let f = PathBuf::from(f);
+    let data = fs::read(&f).unwrap();
+
+    let File::MachO64(old_) = object::read::File::parse(&data as &[u8]).unwrap() else {
+        panic!()
+    };
+
+    for export in old_.exports().unwrap() {
+        println!("{:?}", export.name().to_utf8());
+    }
+}
