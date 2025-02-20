@@ -1,2 +1,0 @@
-ld: warning: ignoring duplicate libraries: '-lSystem', '-lc', '-lobjc'
-ld: warning: object file (/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/libobjc_exception-365841bde24cafbd.rlib[4](6e31d61a582ee51a-exception.o)) was built for newer 'macOS' version (14.5) than being linked (11.0)

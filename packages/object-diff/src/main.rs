@@ -128,8 +128,27 @@ fn main() -> anyhow::Result<()> {
                     let r_addr = *r_addr as usize - sym.address() as usize;
                     relocated_data[r_addr as usize..r_addr as usize + 4]
                         .copy_from_slice(&0x70707070_i32.to_be_bytes());
+                } else {
+                    panic!()
                 }
             }
+
+            // Make sure our masking is correct
+            let matche = compare_masked(
+                &new_,
+                &new_,
+                ComparedSymbol {
+                    offset: sym.address() as usize,
+                    data: &data,
+                    relocations: &cur_relocs,
+                },
+                ComparedSymbol {
+                    offset: sym.address() as usize,
+                    data: &relocated_data,
+                    relocations: &cur_relocs,
+                },
+            );
+            assert!(matche);
 
             let pretty = pretty_hex::config_hex(
                 &relocated_data,
@@ -241,12 +260,28 @@ fn compare_masked<'a>(
         return false;
     }
 
+    // Make sure the data is the same length
+    // If the size changed then the instructions are different (well, not necessarily, but enough)
+    if left.data.len() != right.data.len() {
+        return false;
+    }
+
+    // We're going to walk from relocation target to target, but since there's no implicit target
+    // to start with, we simply use the end of the data
+    let mut last = left.data.len();
+
     // Ensure the relocations point to the same symbol
     // Data symbols are special ... todo
+    //
+    // relocations are in reverse order, so we can also compare the data as we go
     for x in 0..left.relocations.len() {
+        // Grab the reloc
+        let (l_addr, left_reloc): &(u64, Relocation) = &left.relocations[x];
+        let (_r_addr, right_reloc): &(u64, Relocation) = &right.relocations[x];
+
         // The targets might not be same by index but should resolve to the same *name*
-        let left_target: RelocationTarget = left.relocations[x].1.target();
-        let right_target: RelocationTarget = right.relocations[x].1.target();
+        let left_target: RelocationTarget = left_reloc.target();
+        let right_target: RelocationTarget = right_reloc.target();
 
         // Use the name of the symbol to compare
         // todo: decide if it's internal vs external
@@ -255,10 +290,35 @@ fn compare_masked<'a>(
 
         // Make sure the names match
         if left_name != right_name {
+            println!("names don't match: {left_name:?} != {right_name:?}");
+            return false;
+        }
+
+        // Check the data
+        // the slice is the end of the relocation to the start of the previous relocation
+        let reloc_byte_size = (left_reloc.size() as usize) / 8;
+        let start = *l_addr as usize - left.offset as usize + reloc_byte_size;
+        // println!(
+        //     "addr: {l_addr}, adju: {}, start: {start}, last: {last}",
+        //     *l_addr as usize - left.offset
+        // );
+        debug_assert!(start <= last);
+        debug_assert!(start <= left.data.len());
+
+        let left_subslice = &left.data[start..last];
+        let right_subslice = &right.data[start..last];
+
+        if left_subslice != right_subslice {
             return false;
         }
 
         // todo: more checking... the symbols might be local
+        last = start - reloc_byte_size;
+    }
+
+    // And a final check to make sure the data is the same
+    if left.data[..last] != right.data[..last] {
+        return false;
     }
 
     true

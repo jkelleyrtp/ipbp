@@ -22,6 +22,8 @@ fn zoom_controls() -> Element {
             h1 { "Rust VIBE CODING it!!" }
             em { "powered by 123" }
             h2 { "Dioxus Binary Patching 💪" }
+            h2 { "Dioxus Binary Patching 💪" }
+            h2 { "Dioxus Binary Patching 💪" }
             button {
                 onclick: move |_| {
                     count.set(count() + 1);
