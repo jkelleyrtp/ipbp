@@ -1,5 +1,8 @@
 use std::{
-    borrow, env, error,
+    borrow,
+    cmp::Ordering,
+    collections::VecDeque,
+    env, error,
     ffi::OsStr,
     fs,
     path::{self, PathBuf},
@@ -9,11 +12,15 @@ use std::{
     path::Path,
 };
 
+use itertools::Itertools;
 use object::{
-    read::macho::Nlist, File, Object, ObjectSection, ObjectSegment, ObjectSymbol,
-    ObjectSymbolTable, ReadRef, SectionIndex, SymbolIndex,
+    macho::MachHeader64,
+    read::macho::{MachOSymbol, Nlist},
+    Endianness, File, Object, ObjectSection, ObjectSegment, ObjectSymbol, ObjectSymbolTable,
+    ReadRef, SectionIndex, SymbolIndex,
 };
 use pretty_assertions::Comparison;
+use pretty_hex::{Hex, HexConfig};
 
 mod helper;
 
@@ -75,99 +82,99 @@ fn main() -> anyhow::Result<()> {
             .find(|s| s.name_bytes() == Ok(b"__text"))
             .unwrap();
         let text_length = text.size();
-        // println!("relocations: {:#?}", text.relocations().collect::<Vec<_>>());
-        // let symbol_names = new_.symbol_map()
+        let text_data = text.data().unwrap();
+        let mut relocations = text.relocations().collect::<VecDeque<_>>();
         let mut saved_data = text.data().unwrap().to_vec();
+
+        let sorted_symbols = new_
+            .symbols()
+            .filter(|s| s.section_index() == Some(text.index()))
+            .sorted_by(stable_sort_symbols);
 
         // Walk the symbols in the text section and print the relocations per symbol
         // eventually this will need to include other sections?
-        for sym in new_.symbols()
-        // .filter(|s| )
-        {
-            let sect = sym
-                .section_index()
-                .map(|i| new_.section_by_index(i).unwrap().name());
+        // We're going backwards so we can use the text_length as the initial backstop
+        let mut last = text_length as usize;
+        for sym in sorted_symbols.into_iter().rev() {
+            // for sym in sorted_symbols.into_iter().rev() {
+            // Only walk the symbols in the text section for now...
+            if !(sym.section_index() == Some(text.index())) {
+                continue;
+            }
 
-            // let is_text = sym.section_index() == Some(text.index());
-            // if !is_text {
-            //     continue;
-            // }
+            let is_exported = exports.contains_key(&sym.name().unwrap());
+            let range = sym.address() as usize..last;
+            let data = &text_data[range.clone()];
+            let pretty = pretty_hex::config_hex(
+                &data,
+                HexConfig {
+                    display_offset: sym.address() as usize,
+                    ..Default::default()
+                },
+            );
 
-            let is_import = !sym.is_definition() && imports.contains(&sym.name().unwrap());
+            println!(
+                "Sym [{} - {}] - {:?}\n{}",
+                sym.address(),
+                if is_exported { "export" } else { "local" },
+                sym.name().unwrap(),
+                pretty // sym.kind(),
+            );
 
-            let is_export = exports.contains_key(&sym.name().unwrap());
-            // let is_export = exports.contains_key(&sym.address());
+            loop {
+                let Some((r_addr, reloc)) = relocations.front() else {
+                    break;
+                };
 
-            let name = if is_import {
-                "IMPORT"
-            } else if is_export {
-                "EXPORT"
-            } else if sym.is_global() {
-                "GLOBAL"
-            } else if sym.is_undefined() {
-                "UNDEFINED"
-            } else {
-                match sym.kind() {
-                    object::SymbolKind::Unknown => new_
-                        .section_by_index(sym.section_index().unwrap())
-                        .unwrap()
-                        .name()
-                        .unwrap(),
-                    object::SymbolKind::Text => "Text",
-                    object::SymbolKind::Data => "Data",
-                    object::SymbolKind::Section => "Section",
-                    object::SymbolKind::File => "File",
-                    object::SymbolKind::Label => "Label",
-                    object::SymbolKind::Tls => "Tls",
-                    _ => todo!(),
+                if *r_addr < sym.address() {
+                    break;
                 }
-            };
 
-            println!("Sym [{name}]: {:?}", sym.name().unwrap());
+                let (r_addr, reloc) = relocations.pop_front().unwrap();
+                let name = match reloc.target() {
+                    object::RelocationTarget::Symbol(symbol_index) => {
+                        let symbol = new_.symbol_by_index(symbol_index).unwrap();
+                        symbol.name_bytes().unwrap()
+                    }
+                    object::RelocationTarget::Section(section_index) => {
+                        let section = new_.section_by_index(section_index).unwrap();
+                        section.name_bytes().unwrap()
+                    }
+                    _ => b"absolute",
+                };
+                println!(
+                    "{:04x} {:?} {} implicit: {} -> {}",
+                    r_addr,
+                    reloc.flags(),
+                    reloc.size(),
+                    reloc.has_implicit_addend(),
+                    std::str::from_utf8(name).unwrap()
+                );
+            }
+
+            println!();
+
+            last = sym.address() as usize;
         }
 
-        // for (addr, reloc) in text.relocations() {
-        //     let target = reloc.target();
-        //     let name = match target {
-        //         object::RelocationTarget::Symbol(symbol_index) => {
-        //             let symbol = new_.symbol_by_index(symbol_index).unwrap();
-        //             symbol.name_bytes().unwrap()
-        //         }
-        //         object::RelocationTarget::Section(section_index) => {
-        //             continue;
-        //             // let section = new_.section_by_index(section_index).unwrap();
-        //             // section.name_bytes().unwrap()
-        //         }
-        //         _ => b"absolute",
-        //     };
-
-        //     println!(
-        //         "{addr:04} {:?} {} implicit: {} -> {}",
-        //         reloc.flags(),
-        //         reloc.size(),
-        //         reloc.has_implicit_addend(),
-        //         std::str::from_utf8(name).unwrap()
-        //     );
-        // }
-
-        // Walk the functions in reverse and figure out the relocations
-
-        // println!("text_length: {text_length}");
-        // for e in new_.symbols() {
-        //     println!(
-        //         "{:?} / {:?} - {} -  {}",
-        //         e.name(),
-        //         e.section_index()
-        //             .map(|f| new_.section_by_index(f).unwrap().name()),
-        //         e.address(),
-        //         e.is_definition()
-        //     );
-        // }
+        assert!(relocations.is_empty());
 
         println!()
     }
 
     Ok(())
+}
+
+fn stable_sort_symbols(
+    a: &MachOSymbol<MachHeader64<Endianness>>,
+    b: &MachOSymbol<MachHeader64<Endianness>>,
+) -> Ordering {
+    let addr = a.address().cmp(&b.address());
+    if addr == Ordering::Equal {
+        a.index().0.cmp(&b.index().0)
+    } else {
+        addr
+    }
 }
 
 // /// A symbol with its paired relocations and data

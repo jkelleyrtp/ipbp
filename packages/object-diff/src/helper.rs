@@ -519,3 +519,76 @@ fn dump_file(
     }
     Ok(())
 }
+
+// let sect = sym
+//     .section_index()
+//     .map(|i| new_.section_by_index(i).unwrap().name());
+// let is_import = !sym.is_definition() && imports.contains(&sym.name().unwrap());
+
+// let is_export = exports.contains_key(&sym.name().unwrap());
+// // let is_export = exports.contains_key(&sym.address());
+
+// let name = if is_import {
+//     "IMPORT"
+// } else if is_export {
+//     "EXPORT"
+// } else if sym.is_global() {
+//     "GLOBAL"
+// } else if sym.is_undefined() {
+//     "UNDEFINED"
+// } else {
+//     match sym.kind() {
+//         object::SymbolKind::Unknown => new_
+//             .section_by_index(sym.section_index().unwrap())
+//             .unwrap()
+//             .name()
+//             .unwrap(),
+//         object::SymbolKind::Text => "Text",
+//         object::SymbolKind::Data => "Data",
+//         object::SymbolKind::Section => "Section",
+//         object::SymbolKind::File => "File",
+//         object::SymbolKind::Label => "Label",
+//         object::SymbolKind::Tls => "Tls",
+//         _ => todo!(),
+//     }
+// };
+
+// println!("Sym [{name}]: {:?}", sym.name().unwrap());
+
+// for (addr, reloc) in text.relocations() {
+//     let target = reloc.target();
+//     let name = match target {
+//         object::RelocationTarget::Symbol(symbol_index) => {
+//             let symbol = new_.symbol_by_index(symbol_index).unwrap();
+//             symbol.name_bytes().unwrap()
+//         }
+//         object::RelocationTarget::Section(section_index) => {
+//             continue;
+//             // let section = new_.section_by_index(section_index).unwrap();
+//             // section.name_bytes().unwrap()
+//         }
+//         _ => b"absolute",
+//     };
+
+//     println!(
+//         "{addr:04} {:?} {} implicit: {} -> {}",
+//         reloc.flags(),
+//         reloc.size(),
+//         reloc.has_implicit_addend(),
+//         std::str::from_utf8(name).unwrap()
+//     );
+// }
+
+// Walk the functions in reverse and figure out the relocations
+
+// println!("text_length: {text_length}");
+// for e in new_.symbols() {
+//     println!(
+//         "{:?} / {:?} - {} -  {}",
+//         e.name(),
+//         e.section_index()
+//             .map(|f| new_.section_by_index(f).unwrap().name()),
+//         e.address(),
+//         e.is_definition()
+//     );
+// }
