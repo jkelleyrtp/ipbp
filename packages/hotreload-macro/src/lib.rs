@@ -28,7 +28,7 @@ pub fn hotreload_start(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let mut inner_sig = sig.clone();
-    inner_sig.ident = format_ident!("hotreloaded_{}", sig.ident);
+    inner_sig.ident = format_ident!("__hotreload_start_{}", sig.ident);
     let inner_fn_name = inner_sig.ident.clone();
     let inner_fn_name_str = inner_sig.ident.clone().to_string();
 

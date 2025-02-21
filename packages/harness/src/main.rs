@@ -7,7 +7,7 @@ fn main() {
     dioxus::launch(app);
 }
 
-#[binary_patch::patched]
+#[binary_patch::start]
 fn app() -> Element {
     rsx! {
         zoom_controls {}
@@ -22,17 +22,15 @@ fn zoom_controls() -> Element {
             h1 { "Rust VIBE CODING it!!" }
             em { "powered by 123" }
             h2 { "Dioxus Binary Patching 💪" }
-            h2 { "Dioxus Binary Patching 💪" }
-            h2 { "Dioxus Binary Patching 💪" }
             button {
                 onclick: move |_| {
-                    count.set(count() + 1);
+                    count.set(count() + 3);
                 },
                 "Click me?"
             }
             button {
                 onclick: move |_| {
-                    count.set(count() + 2);
+                    count.set(count() + 5);
                 },
                 "Click me again?!!!"
             }

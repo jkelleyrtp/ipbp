@@ -6,8 +6,9 @@ use object::{Object, ObjectSymbol};
 use std::{env, fs, path::PathBuf};
 use tokio::io::AsyncBufReadExt;
 
-pub use hotreload_macro::hotreload_start as patched;
+pub use hotreload_macro::hotreload_start as start;
 
+/// Waits for stdin to send a new library
 pub fn use_hotreload_component(name: &str, initial: fn() -> Element) -> Element {
     let mut library = use_signal(|| None as Option<&'static mut Library>);
     let mut libraries = use_signal(|| vec![]);

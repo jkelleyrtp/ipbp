@@ -1,3 +1,4 @@
+use memmap::{Mmap, MmapOptions};
 use std::{
     borrow,
     cmp::Ordering,
@@ -5,6 +6,7 @@ use std::{
     env, error,
     ffi::OsStr,
     fs,
+    ops::Deref,
     path::{self, PathBuf},
 };
 use std::{
@@ -17,17 +19,22 @@ use object::{
     macho::MachHeader64,
     read::macho::{MachOFile, MachOSection, MachOSymbol, Nlist},
     Endianness, Export, File, Import, Object, ObjectSection, ObjectSegment, ObjectSymbol,
-    ObjectSymbolTable, ReadRef, Relocation, RelocationTarget, SectionIndex, SymbolIndex,
-    SymbolKind,
+    ObjectSymbolTable, ReadRef, Relocation, RelocationTarget, SectionIndex, SectionKind,
+    SymbolIndex, SymbolKind,
 };
 use pretty_assertions::Comparison;
 use pretty_hex::{Hex, HexConfig};
 
+#[tokio::test]
+async fn works() {
+    main().await.unwrap();
+}
+
 /// Take a stream of object files and decide which symbols to convert to dynamic lookups
-fn main() -> anyhow::Result<()> {
+pub async fn main() -> anyhow::Result<()> {
     // Load the object file streams
-    let left_files = read_dir_to_objects(&workspace_dir().join("data").join("incremental-old"));
-    let right_files = read_dir_to_objects(&workspace_dir().join("data").join("incremental-new"));
+    let left_files = LoadedFiles::from_dir(&workspace_dir().join("data").join("incremental-old"))?;
+    let right_files = LoadedFiles::from_dir(&workspace_dir().join("data").join("incremental-new"))?;
     let num_left = left_files.len();
     let num_right = right_files.len();
 
@@ -35,41 +42,59 @@ fn main() -> anyhow::Result<()> {
     let mut mismatched = 0;
     let mut missing = 0;
 
+    // The changed files
     let mut modified_files: HashMap<PathBuf, HashSet<String>> = HashMap::new();
+
+    // The chain of symbols affected by a change. Uses a foward pass
+    let mut changed_chain: HashSet<String> = HashSet::new();
 
     // for now, assume cgu puts things into the same files. need to break that assumption eventually
     for (idx, new_file) in right_files.into_iter().enumerate() {
         let Some(left) = left_files
             .iter()
-            .find(|l| l.file_name() == new_file.file_name())
+            .find(|l| l.path.file_name() == new_file.path.file_name())
         else {
-            println!("no left for {new_file:?}");
-            modified_files.entry(new_file.clone()).or_default();
+            println!("no left for {:?}", new_file.path);
+            modified_files.entry(new_file.path.clone()).or_default();
             continue;
         };
 
         println!(
             "----- {:?} {}/{} -----",
-            new_file.file_name(),
+            new_file.path.file_name(),
             idx,
             num_right
         );
-        let left_data = fs::read(&left).unwrap();
-        let right_data = fs::read(&new_file).unwrap();
 
-        let File::MachO64(old_) = object::read::File::parse(&left_data as &[u8]).unwrap() else {
+        let File::MachO64(old_) = object::read::File::parse(&left.mmap.deref() as &[u8]).unwrap()
+        else {
             panic!()
         };
 
-        let File::MachO64(new_) = object::read::File::parse(&right_data as &[u8]).unwrap() else {
+        let File::MachO64(new_) =
+            object::read::File::parse(&new_file.mmap.deref() as &[u8]).unwrap()
+        else {
             panic!()
         };
 
         let new = Computed::new(&new_);
         let old = Computed::new(&old_);
 
-        let relocated_new = accumulate_masked_symbols(&new);
-        let mut relocated_old = accumulate_masked_symbols(&old)
+        // push data symbols to the changed chain
+        for section in new.file.sections() {
+            // pr
+            // if section.kind() == SectionKind::Data
+            //     for (addr, reloc) in section.relocations() {
+            //         let target = reloc.target();
+            //         let target_name = name_of_relocation_target(new.file, target);
+            //         changed_chain.insert(target_name);
+            //     }
+            // }
+        }
+
+        // Accumulate modified symbols using masking in functions
+        let relocated_new = accumulate_masked_functions(&new);
+        let mut relocated_old = accumulate_masked_functions(&old)
             .into_iter()
             .map(|f| (f.name, f))
             .collect::<HashMap<_, _>>();
@@ -81,7 +106,7 @@ fn main() -> anyhow::Result<()> {
             let Some(left) = relocated_old.remove(right.name) else {
                 if right.sym.is_global() {
                     modified_files
-                        .entry(new_file.clone())
+                        .entry(new_file.path.clone())
                         .or_default()
                         .insert(right.name.to_string());
                 }
@@ -114,12 +139,45 @@ fn main() -> anyhow::Result<()> {
                     mismatched += 1;
                     if right.sym.is_global() {
                         modified_files
-                            .entry(new_file.clone())
+                            .entry(new_file.path.clone())
                             .or_default()
                             .insert(right.name.to_string());
+                        changed_chain.insert(right.name.to_string());
                     }
                 }
             }
+
+            // If any of the relocations target a symbol in the changed chain, then the symbol is in the changed chain too
+            for (_addr, reloc) in right.relocations.iter() {
+                let target = reloc.target();
+                let target_name = name_of_relocation_target(new.file, target);
+
+                if target_name == "__ZN11dioxus_core6events26Callback$LT$Args$C$Ret$GT$3new28_$u7b$$u7b$closure$u7d$$u7d$17h76463f876c247021E" {
+                    print!("found reference to {target_name}");
+                }
+
+                if changed_chain.contains(target_name) {
+                    println!("Found changed for target {} in {}", target_name, right.name);
+                    changed_chain.insert(right.name.to_string());
+                }
+
+                // if new.imports.contains_key(target_name) {
+                //     println!("Found import for target {} in {}", target_name, right.name);
+                // }
+            }
+        }
+
+        if let Some((m, i)) = new
+            .imports
+            .iter()
+            .find(|(i, _)| changed_chain.contains(**i))
+        {
+            println!(
+                "Found import for target {} in {:?}",
+                m,
+                new_file.path.file_name().unwrap()
+            );
+            // changed_chain.insert(right.name.to_string());
         }
     }
 
@@ -127,8 +185,37 @@ fn main() -> anyhow::Result<()> {
     println!("mismatched: {mismatched}");
     println!("missing: {missing}");
     println!("modified: {modified_files:#?}");
+    println!("changed chain: {changed_chain:#?}");
 
     Ok(())
+}
+
+struct LoadedFiles {
+    path: PathBuf,
+    file: std::fs::File,
+    mmap: Mmap,
+}
+
+impl LoadedFiles {
+    fn from_dir(dir: &Path) -> anyhow::Result<Vec<Self>> {
+        let dir = std::fs::read_dir(dir)?;
+        let mut files = dir
+            .flatten()
+            .map(|f| f.path())
+            .filter(|p| p.extension() == Some(OsStr::new("o")))
+            .map(|p| Self::new(p))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        files.sort_by(|a, b| a.path.cmp(&b.path));
+
+        Ok(files)
+    }
+
+    fn new(path: PathBuf) -> anyhow::Result<Self> {
+        let file = std::fs::File::open(&path)?;
+        let mmap = unsafe { MmapOptions::new().map(&file).unwrap() };
+        Ok(Self { path, file, mmap })
+    }
 }
 
 struct Computed<'data, 'file> {
@@ -209,7 +296,7 @@ struct RelocatedSymbol<'a> {
     sym: &'a MachOSymbol<'a, 'a, MachHeader64<Endianness>>,
 }
 
-fn accumulate_masked_symbols<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<RelocatedSymbol<'a>> {
+fn accumulate_masked_functions<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<RelocatedSymbol<'a>> {
     let mut syms = vec![];
 
     // The end of the currently analyzed function
@@ -266,6 +353,9 @@ fn accumulate_masked_symbols<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<Relocated
 
         func_end = sym.address() as usize;
     }
+
+    // ensure we handled all the relocations
+    assert_eq!(reloc_idx, new.text_relocations.len());
 
     syms
 }
@@ -369,17 +459,11 @@ fn name_of_relocation_target<'a>(obj: &impl Object<'a>, target: RelocationTarget
             let section = obj.section_by_index(section_index).unwrap();
             section.name_bytes().unwrap().to_utf8()
         }
-        _ => "absolute",
+        _ => {
+            println!("unknown relocation target: {:?}", target);
+            "absolute"
+        }
     }
-}
-
-fn read_dir_to_objects(dir: &Path) -> Vec<PathBuf> {
-    std::fs::read_dir(dir)
-        .unwrap()
-        .flatten()
-        .map(|f| f.path())
-        .filter(|p| p.extension() == Some(OsStr::new("o")))
-        .collect()
 }
 
 fn workspace_dir() -> PathBuf {
@@ -452,7 +536,8 @@ type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
 
 #[test]
 fn does_have_exports() {
-    let f = "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-df4868ea1b5cadad";
+    let f =
+        "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/output-1740094105568";
     let f = PathBuf::from(f);
     let data = fs::read(&f).unwrap();
 
@@ -463,4 +548,40 @@ fn does_have_exports() {
     for export in old_.exports().unwrap() {
         println!("{:?}", export.name().to_utf8());
     }
+}
+
+/// I think symbols show up in data sections and need to be identified
+#[test]
+fn hmm_imports() {
+    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-old/harness-df4868ea1b5cadad.egexdem49eejgynie32zwugcu.rcgu.o";
+    let f = PathBuf::from(f);
+
+    let data = fs::read(&f).unwrap();
+
+    let File::MachO64(old_) = object::read::File::parse(&data as &[u8]).unwrap() else {
+        panic!()
+    };
+
+    for sect in old_.sections() {
+        println!("{:?}", sect.name());
+    }
+
+    // for sym in old_.symbols() {
+    //     // if sym.is_definition() {
+    //     let sec_name = sym
+    //         .section()
+    //         .index()
+    //         .map(|i| old_.section_by_index(i).unwrap().name());
+    //     println!("{:?} -> {:?} -> {:?}", sym.name(), sym.kind(), sec_name);
+    //     // }
+    // }
+
+    // for sectin in old_.sections() {
+    //     println!("{:?} -> {:?}", sectin.name(), sectin.kind());
+    //     for (addr, relo) in sectin.relocations() {
+    //         let name = name_of_relocation_target(&old_, relo.target());
+    //         println!("{} -> {:?}", addr, name);
+    //         // println!("{:?}", relo);
+    //     }
+    // }
 }

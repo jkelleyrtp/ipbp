@@ -2,6 +2,7 @@ use std::{path::PathBuf, process::Stdio, time::SystemTime};
 
 use anyhow::Context;
 use cargo_metadata::camino::Utf8PathBuf;
+use clap::Parser;
 use futures::StreamExt;
 use notify::{event::DataChange, Watcher};
 use serde::Deserialize;
@@ -13,12 +14,30 @@ use tokio::{
 
 mod diff;
 
+#[derive(Debug, Parser)]
+enum Args {
+    #[clap(name = "hotreload")]
+    Hotreload,
+
+    #[clap(name = "diff")]
+    Diff,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Go through the linker if we need to
     if let Ok(action) = std::env::var("HOTRELOAD_LINK") {
         return link(action).await;
     }
 
+    // Otherwise the commands
+    match Args::parse() {
+        Args::Hotreload => hotreload_loop().await,
+        Args::Diff => diff::main().await,
+    }
+}
+
+async fn hotreload_loop() -> anyhow::Result<()> {
     // Save the state of the rust files
     let main_rs = PathBuf::from(workspace_root().join("packages/harness/src/main.rs"));
     let mut contents = std::fs::read_to_string(&main_rs).unwrap();
@@ -180,11 +199,14 @@ async fn link(action: String) -> anyhow::Result<()> {
             // -exported_symbol and friends - could help with dead-code stripping
             // -e symbol_name - for setting the entrypoint
             // -keep_relocs ?
+
+            // run the linker, but unexport the `_main` symbol
             let res = Command::new("cc")
                 .args(object_files)
                 .arg("-dylib")
                 .arg("-undefined")
                 .arg("dynamic_lookup")
+                .arg("-Wl,-unexported_symbol,_main")
                 .arg("-arch")
                 .arg("arm64")
                 .arg("-dead_strip") // maybe?
@@ -205,17 +227,28 @@ async fn link(action: String) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Move all previous object files to "incremental-old" and all new object files to "incremental-new"
 fn cache_incrementals(object_files: &[&String]) {
-    let incr_dir = workspace_root().join("data").join("incremental");
-    std::fs::remove_dir_all(&incr_dir).unwrap();
-    std::fs::create_dir_all(&incr_dir).unwrap();
+    let old = workspace_root().join("data").join("incremental-old");
+    let new = workspace_root().join("data").join("incremental-new");
+
+    // Remove the old incremental-old directory if it exists
+    _ = std::fs::remove_dir_all(&old);
+
+    // Rename incremental-new to incremental-old if it exists. Faster than moving all the files
+    _ = std::fs::rename(&new, &old);
+
+    // Create the new incremental-new directory to place the outputs in
+    std::fs::create_dir_all(&new).unwrap();
+
+    // Now drop in all the new object files
     for o in object_files.iter() {
         if !o.ends_with(".rcgu.o") {
             continue;
         }
 
         let path = PathBuf::from(o);
-        std::fs::copy(&path, incr_dir.join(path.file_name().unwrap())).unwrap();
+        std::fs::copy(&path, new.join(path.file_name().unwrap())).unwrap();
     }
 }
 
