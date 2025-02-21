@@ -24,7 +24,7 @@ fn zoom_controls() -> Element {
             h2 { "Dioxus Binary Patching 💪" }
             button {
                 onclick: move |_| {
-                    count.set(count() + 3);
+                    count.set(count() + 1);
                 },
                 "Click me?"
             }
@@ -50,7 +50,7 @@ fn zoom_controls() -> Element {
             Child { a: 123, b: "hello!?" }
             Child2 {}
             Child2 {}
-            // NewKid {}
+            NewKid {}
             for i in 0..count() {
                 div { "You wow that's insane it works {i} {i} {i * 2} times" }
                 button {
@@ -65,12 +65,12 @@ fn zoom_controls() -> Element {
 }
 
 //
-// #[component]
-// fn NewKid() -> Element {
-//     rsx! {
-//         div { "NewKidoo!" }
-//     }
-// }
+#[component]
+fn NewKid() -> Element {
+    rsx! {
+        div { "NewKidoo!" }
+    }
+}
 
 static MyGlobal: GlobalSignal<i32> = GlobalSignal::new(|| 0);
 

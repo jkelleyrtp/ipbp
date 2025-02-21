@@ -1,3 +1,4 @@
+use anyhow::Result;
 use memmap::{Mmap, MmapOptions};
 use std::{
     borrow,
@@ -6,6 +7,7 @@ use std::{
     env, error,
     ffi::OsStr,
     fs,
+    marker::PhantomData,
     ops::Deref,
     path::{self, PathBuf},
 };
@@ -30,33 +32,141 @@ async fn works() {
     main().await.unwrap();
 }
 
-/// Take a stream of object files and decide which symbols to convert to dynamic lookups
 pub async fn main() -> anyhow::Result<()> {
-    // Load the object file streams
-    let left_files = LoadedFiles::from_dir(&workspace_dir().join("data").join("incremental-old"))?;
-    let right_files = LoadedFiles::from_dir(&workspace_dir().join("data").join("incremental-new"))?;
-    let num_left = left_files.len();
-    let num_right = right_files.len();
+    ObjectDiff::new().unwrap().load();
+    Ok(())
+}
 
-    let mut matched = 0;
-    let mut mismatched = 0;
-    let mut missing = 0;
+struct ObjectDiff {
+    old: Vec<LoadedFile>,
+    new: Vec<LoadedFile>,
+    matched: usize,
+    mismatched: usize,
+    missing: usize,
+    modified_files: HashMap<PathBuf, HashSet<String>>,
+    modified_symbols: HashSet<String>,
+    // parent -> child
+    deps: HashMap<String, HashSet<String>>,
+    // child -> parent
+    parents: HashMap<String, HashSet<String>>,
+}
 
-    // The changed files
-    let mut modified_files: HashMap<PathBuf, HashSet<String>> = HashMap::new();
+impl ObjectDiff {
+    fn new() -> Result<Self> {
+        Ok(Self {
+            old: LoadedFile::from_dir(&workspace_dir().join("data").join("incremental-old"))?,
+            new: LoadedFile::from_dir(&workspace_dir().join("data").join("incremental-new"))?,
+            matched: 0,
+            mismatched: 0,
+            missing: 0,
+            modified_files: Default::default(),
+            modified_symbols: Default::default(),
+            deps: Default::default(),
+            parents: Default::default(),
+        })
+    }
 
-    // The chain of symbols affected by a change. Uses a foward pass
-    let mut changed_chain: HashSet<String> = HashSet::new();
+    fn load(&mut self) -> Result<()> {
+        for x in 0..self.new.len() {
+            self.load_file(x)?;
+        }
 
-    // for now, assume cgu puts things into the same files. need to break that assumption eventually
-    for (idx, new_file) in right_files.into_iter().enumerate() {
-        let Some(left) = left_files
+        println!("matched: {}", self.matched);
+        println!("mismatched: {}", self.mismatched);
+        println!("missing: {}", self.missing);
+        // println!("modified: {:#?}", self.modified_files);
+        // println!("changed chain: {:#?}", self.modified_symbols);
+
+        for (parent, children) in self.deps.iter() {
+            for child in children {
+                self.parents
+                    .entry(child.to_string())
+                    .or_default()
+                    .insert(parent.to_string());
+            }
+        }
+
+        for changed in self.modified_symbols.iter() {
+            self.print_parent(changed);
+        }
+
+        // print the call graph from "_main"
+        // self.print_call_graph("_main", 0);
+
+        Ok(())
+    }
+
+    fn print_parent(&self, name: &str) {
+        let mut stack = vec![(name.to_string(), 0)];
+        let mut seen = HashSet::new();
+
+        while let Some((current_name, idx)) = stack.pop() {
+            if !seen.insert(current_name.clone()) {
+                continue;
+            }
+            if idx > 30 {
+                continue;
+            }
+
+            for _ in 0..idx {
+                print!(" ");
+            }
+            println!(" {}", current_name);
+
+            if let Some(parents) = self.parents.get(&current_name) {
+                for parent in parents {
+                    stack.push((parent.to_string(), idx + 1));
+                }
+            }
+        }
+    }
+
+    // Find the path from this symbol to the root
+    // fn find_parents(&self, name: &str, path_to_root: &mut HashSet<String>) {
+    //     if let Some(parents) = self.parents.get(name) {
+    //         for parent in parents {
+    //             if path_to_root.insert(parent.to_string()) {
+    //                 self.find_parents(&parent, path_to_root);
+    //             }
+    //         }
+    //     }
+    // }
+
+    fn print_call_graph(&self, name: &str, idx: usize) {
+        if idx > 200 {
+            return;
+        }
+
+        for _ in 0..idx {
+            print!(" *");
+        }
+        println!(" {name}");
+        if let Some(children) = self.deps.get(name) {
+            for child in children {
+                self.print_call_graph(child, idx + 1);
+            }
+        }
+    }
+
+    fn load_file(&mut self, idx: usize) -> Result<()> {
+        use object::read::File;
+
+        let num_left = self.old.len();
+        let num_right = self.new.len();
+
+        let new_file = &self.new[idx];
+        let left = self
+            .old
             .iter()
-            .find(|l| l.path.file_name() == new_file.path.file_name())
-        else {
+            .find(|l| l.path.file_name() == new_file.path.file_name());
+
+        let Some(left) = left else {
             println!("no left for {:?}", new_file.path);
-            modified_files.entry(new_file.path.clone()).or_default();
-            continue;
+            self.modified_files
+                .entry(new_file.path.clone())
+                .or_default();
+
+            return Ok(());
         };
 
         println!(
@@ -66,137 +176,110 @@ pub async fn main() -> anyhow::Result<()> {
             num_right
         );
 
-        let File::MachO64(old_) = object::read::File::parse(&left.mmap.deref() as &[u8]).unwrap()
-        else {
+        // We need to deal with macho directly for now... eventually
+        let File::MachO64(old_) = File::parse(&left.mmap.deref() as &[u8])? else {
+            panic!()
+        };
+        let File::MachO64(new_) = File::parse(&new_file.mmap.deref() as &[u8])? else {
             panic!()
         };
 
-        let File::MachO64(new_) =
-            object::read::File::parse(&new_file.mmap.deref() as &[u8]).unwrap()
-        else {
-            panic!()
-        };
+        // Ok("__text")
+        // Ok("__gcc_except_tab")
+        // Ok("__const")
+        // Ok("__const")
+        // Ok("__literal16")
+        // Ok("__literal8")
 
-        let new = Computed::new(&new_);
-        let old = Computed::new(&old_);
+        let dep_graph = ModuleWithRelocations::new(&new_);
 
-        // push data symbols to the changed chain
-        for section in new.file.sections() {
-            // pr
-            // if section.kind() == SectionKind::Data
-            //     for (addr, reloc) in section.relocations() {
-            //         let target = reloc.target();
-            //         let target_name = name_of_relocation_target(new.file, target);
-            //         changed_chain.insert(target_name);
-            //     }
-            // }
+        for section in new_.sections() {
+            let n = section.name().unwrap();
+            if n == "__text" || n == "__const" || n.starts_with("__literal") {
+                let changed = self.acc_changed(&old_, &new_, section.index());
+                // println!("changed: {:#?}", changed);
+                if !changed.is_empty() {
+                    println!("section: {n}");
+                }
+                for n in &changed {
+                    let parents = dep_graph.acc_public_parents(n);
+
+                    self.modified_symbols
+                        .extend(parents.iter().map(|p| p.to_string()));
+
+                    self.modified_files
+                        .entry(new_file.path.clone())
+                        .or_default()
+                        .extend(parents.iter().map(|p| p.to_string()));
+                }
+            }
         }
 
+        Ok(())
+    }
+
+    fn acc_changed(
+        &self,
+        old: &MachOFile<'_, MachHeader64<Endianness>>,
+        new: &MachOFile<'_, MachHeader64<Endianness>>,
+        section_idx: SectionIndex,
+    ) -> HashSet<String> {
+        let mut local_modified = HashSet::new();
+
         // Accumulate modified symbols using masking in functions
-        let relocated_new = accumulate_masked_functions(&new);
-        let mut relocated_old = accumulate_masked_functions(&old)
+        let relocated_new = acc_symbols(&new, section_idx);
+        let mut relocated_old = acc_symbols(&old, section_idx)
             .into_iter()
             .map(|f| (f.name, f))
             .collect::<HashMap<_, _>>();
 
         for right in relocated_new {
-            let is_exported = new.exports.contains_key(&right.name);
+            // let is_exported = new.exports.contains_key(&right.name);
 
             // temp assert while in dev
             let Some(left) = relocated_old.remove(right.name) else {
-                if right.sym.is_global() {
-                    modified_files
-                        .entry(new_file.path.clone())
-                        .or_default()
-                        .insert(right.name.to_string());
-                }
-                println!("no right for {}", right.name);
-                missing += 1;
+                local_modified.insert(right.name.to_string());
+                // println!("no right for {}", right.name);
                 continue;
             };
 
-            match compare_masked(&old_, &new_, &left, &right) {
-                true => {
-                    matched += 1;
-                    // println!("✅ Symbols match")
-                }
+            match compare_masked(old, new, &left, &right) {
+                true => {}
                 false => {
                     println!(
-                        "Sym [{} - {}] - {:?}\n{}",
+                        "Sym [{} ] - {:?}",
                         right.sym.address(),
-                        if is_exported { "export" } else { "local" },
+                        // if is_exported { "export" } else { "local" },
                         right.sym.name().unwrap(),
-                        pretty_hex::config_hex(
-                            &right.data,
-                            HexConfig {
-                                display_offset: right.sym.address() as usize,
-                                ..Default::default()
-                            },
-                        )
+                        // pretty_hex::config_hex(
+                        //     &right.data,
+                        //     HexConfig {
+                        //         display_offset: right.sym.address() as usize,
+                        //         ..Default::default()
+                        //     },
+                        // )
                     );
                     println!("❌ Symbols do not match");
                     println!();
-                    mismatched += 1;
-                    if right.sym.is_global() {
-                        modified_files
-                            .entry(new_file.path.clone())
-                            .or_default()
-                            .insert(right.name.to_string());
-                        changed_chain.insert(right.name.to_string());
-                    }
+
+                    // names might be different, insert both
+                    local_modified.insert(left.name.to_string());
+                    local_modified.insert(right.name.to_string());
                 }
-            }
-
-            // If any of the relocations target a symbol in the changed chain, then the symbol is in the changed chain too
-            for (_addr, reloc) in right.relocations.iter() {
-                let target = reloc.target();
-                let target_name = name_of_relocation_target(new.file, target);
-
-                if target_name == "__ZN11dioxus_core6events26Callback$LT$Args$C$Ret$GT$3new28_$u7b$$u7b$closure$u7d$$u7d$17h76463f876c247021E" {
-                    print!("found reference to {target_name}");
-                }
-
-                if changed_chain.contains(target_name) {
-                    println!("Found changed for target {} in {}", target_name, right.name);
-                    changed_chain.insert(right.name.to_string());
-                }
-
-                // if new.imports.contains_key(target_name) {
-                //     println!("Found import for target {} in {}", target_name, right.name);
-                // }
             }
         }
 
-        if let Some((m, i)) = new
-            .imports
-            .iter()
-            .find(|(i, _)| changed_chain.contains(**i))
-        {
-            println!(
-                "Found import for target {} in {:?}",
-                m,
-                new_file.path.file_name().unwrap()
-            );
-            // changed_chain.insert(right.name.to_string());
-        }
+        local_modified
     }
-
-    println!("matched: {matched}");
-    println!("mismatched: {mismatched}");
-    println!("missing: {missing}");
-    println!("modified: {modified_files:#?}");
-    println!("changed chain: {changed_chain:#?}");
-
-    Ok(())
 }
 
-struct LoadedFiles {
+struct LoadedFile {
     path: PathBuf,
     file: std::fs::File,
     mmap: Mmap,
 }
 
-impl LoadedFiles {
+impl LoadedFile {
     fn from_dir(dir: &Path) -> anyhow::Result<Vec<Self>> {
         let dir = std::fs::read_dir(dir)?;
         let mut files = dir
@@ -218,18 +301,20 @@ impl LoadedFiles {
     }
 }
 
+type FileRef<'data> = &'data MachOFile<'data, MachHeader64<Endianness>>;
+
 struct Computed<'data, 'file> {
-    file: &'file MachOFile<'data, MachHeader64<Endianness>>,
+    file: FileRef<'data>,
     exports: HashMap<&'data str, Export<'data>>,
     imports: HashMap<&'data str, Import<'data>>,
-    text: MachOSection<'data, 'file, MachHeader64<Endianness>>,
-    text_data: &'data [u8],
-    text_relocations: Vec<(u64, Relocation)>,
-    sorted_functions: Vec<MachOSymbol<'data, 'file, MachHeader64<Endianness>>>,
+    _phantom: PhantomData<&'file ()>,
+    // text: MachOSection<'data, 'file, MachHeader64<Endianness>>,
+    // text_data: &'data [u8],
+    // sorted_functions: Vec<MachOSymbol<'data, 'file, MachHeader64<Endianness>>>,
 }
 
 impl<'data, 'file> Computed<'data, 'file> {
-    fn new(file: &'file MachOFile<'data, MachHeader64<Endianness>>) -> Self {
+    fn new(file: &'data MachOFile<'data, MachHeader64<Endianness>>) -> Self {
         let exports = file
             .exports()
             .unwrap()
@@ -244,33 +329,11 @@ impl<'data, 'file> Computed<'data, 'file> {
             .map(|i| (i.name().to_utf8(), *i))
             .collect::<HashMap<_, _>>();
 
-        // Find our functions - todo - this needs to be done for multiple sections
-        let text = file
-            .sections()
-            .find(|s| s.name_bytes() == Ok(b"__text"))
-            .unwrap();
-
-        // Sort them by their address within the text section - necessary so we can determine boundaries for each symbol
-        let sorted_functions = file
-            .symbols()
-            .filter(|s| s.section_index() == Some(text.index()))
-            .sorted_by(stable_sort_symbols)
-            .collect::<Vec<_>>();
-
-        // Get the relocations for the text section - this will typically be in reverse order
-        // We might need to sort these too?
-        let text_relocations = text.relocations().collect::<Vec<_>>();
-
-        let text_data = text.data().unwrap();
-
         Self {
             file,
             exports,
             imports,
-            text,
-            text_data,
-            text_relocations,
-            sorted_functions,
+            _phantom: PhantomData,
         }
     }
 }
@@ -290,39 +353,66 @@ fn stable_sort_symbols(
 /// A function with its relevant relocations to be used for masked comparisons
 struct RelocatedSymbol<'a> {
     name: &'a str,
+    /// offset within the section
     offset: usize,
     data: &'a [u8],
     relocations: &'a [(u64, Relocation)],
-    sym: &'a MachOSymbol<'a, 'a, MachHeader64<Endianness>>,
+    sym: MachOSymbol<'a, 'a, MachHeader64<Endianness>>,
+    section: SectionIndex,
 }
 
-fn accumulate_masked_functions<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<RelocatedSymbol<'a>> {
+fn acc_symbols<'a>(new: FileRef<'a>, section_idx: SectionIndex) -> Vec<RelocatedSymbol<'a>> {
     let mut syms = vec![];
 
+    let section = new.section_by_index(section_idx).unwrap();
+
+    let sorted = new
+        .symbols()
+        .filter(|s| s.section_index() == Some(section_idx))
+        .sorted_by(stable_sort_symbols)
+        .collect::<Vec<_>>();
+
+    // todo!!!!!! jon: don't leak this lol
+    let relocations = section
+        .relocations()
+        .sorted_by(|a, b| a.0.cmp(&b.0).reverse())
+        .collect::<Vec<_>>()
+        .leak();
+
+    let data = section.data().unwrap();
+
+    // no data? no symbols
+    if data.is_empty() {
+        return vec![];
+    }
+
+    // No symbols, no symbols,
+    if sorted.is_empty() {
+        return vec![];
+    }
+
     // The end of the currently analyzed function
-    let mut func_end = new.text.size() as usize;
+    let mut func_end = section.size() as usize;
 
     // The idx into the relocation list that applies to this function. We'll march these
     let mut reloc_idx = 0;
 
     // Walk in reverse so we can use the text_length as the initial backstop and to match relocation order
-    for sym in new.sorted_functions.iter().rev() {
-        // Only walk the symbols in the text section for now...
-        if !(sym.section_index() == Some(new.text.index())) {
-            continue;
-        }
+    for sym in sorted.into_iter().rev() {
+        let sym_offset = sym.address() - section.address();
 
         // Move the head/tail to include the sub-slice of the relocations that apply to this symbol
         let mut reloc_start = None;
         loop {
             // If we've reached the end of the relocations then we're done
-            if reloc_idx == new.text_relocations.len() {
+            if reloc_idx == relocations.len() {
                 break;
             }
 
             // relocations behind the symbol start don't apply
-            if new.text_relocations[reloc_idx].0 < sym.address() {
+            if relocations[reloc_idx].0 < sym_offset {
                 break;
+            } else {
             }
 
             // Set the head to the first relocation that applies
@@ -334,28 +424,28 @@ fn accumulate_masked_functions<'a, 'b>(new: &'a Computed<'a, 'b>) -> Vec<Relocat
         }
 
         // Identify the instructions that apply to this symbol
-        let data_range = sym.address() as usize..func_end;
-        let data = &new.text_data[data_range.clone()];
+        let data_range = sym_offset as usize..func_end;
+        let data = &data[data_range.clone()];
 
         // Identify the relocations that apply to this symbol
         let relocations = match reloc_start {
-            Some(start) => &new.text_relocations[start..reloc_idx],
+            Some(start) => &relocations[start..reloc_idx],
             None => &[],
         };
 
         syms.push(RelocatedSymbol {
             sym,
             name: sym.name().unwrap(),
-            offset: sym.address() as usize,
+            offset: sym_offset as usize,
             data,
             relocations,
+            section: section_idx,
         });
 
-        func_end = sym.address() as usize;
+        func_end = (sym_offset) as usize;
     }
 
-    // ensure we handled all the relocations
-    assert_eq!(reloc_idx, new.text_relocations.len());
+    assert_eq!(reloc_idx, relocations.len());
 
     syms
 }
@@ -404,12 +494,13 @@ fn compare_masked<'a>(
 
         // Use the name of the symbol to compare
         // todo: decide if it's internal vs external
-        let left_name = name_of_relocation_target(old, left_target);
-        let right_name = name_of_relocation_target(new, right_target);
+        let left_name = symbol_name_of_relo(old, left_target).unwrap();
+        let right_name = symbol_name_of_relo(new, right_target).unwrap();
 
         // Make sure the names match
         if left_name != right_name {
-            // if the target is a locally defined symbol, then it might be the samea
+            // if the target is a locally defined symbol, then it might be the same
+            // todo(jon): hash the masked contents
             println!("reloc target doesn't match: {left_name:?} != {right_name:?}");
             return false;
         }
@@ -444,25 +535,21 @@ fn compare_masked<'a>(
     true
 }
 
-fn name_of_relocation_target<'a>(obj: &impl Object<'a>, target: RelocationTarget) -> &'a str {
+fn symbol_name_of_relo<'a>(obj: &impl Object<'a>, target: RelocationTarget) -> Option<&'a str> {
     match target {
-        RelocationTarget::Symbol(symbol_index) => {
-            let symbol = obj.symbol_by_index(symbol_index);
-
-            if symbol.is_err() {
-                panic!("symbol not found: {symbol_index}");
-            }
-
-            symbol.unwrap().name_bytes().unwrap().to_utf8()
+        RelocationTarget::Symbol(symbol_index) => Some(
+            obj.symbol_by_index(symbol_index)
+                .unwrap()
+                .name_bytes()
+                .unwrap()
+                .to_utf8(),
+        ),
+        RelocationTarget::Section(_) => None,
+        RelocationTarget::Absolute => {
+            println!("Absolute relocation target");
+            None
         }
-        RelocationTarget::Section(section_index) => {
-            let section = obj.section_by_index(section_index).unwrap();
-            section.name_bytes().unwrap().to_utf8()
-        }
-        _ => {
-            println!("unknown relocation target: {:?}", target);
-            "absolute"
-        }
+        _ => None,
     }
 }
 
@@ -477,53 +564,6 @@ trait ToUtf8<'a> {
 impl<'a> ToUtf8<'a> for &'a [u8] {
     fn to_utf8(&self) -> &'a str {
         std::str::from_utf8(self).unwrap()
-    }
-}
-
-fn print_relocs(
-    new_: &MachOFile<'_, MachHeader64<Endianness>>,
-    new: &Computed<'_, '_>,
-    r: RelocatedSymbol<'_>,
-) {
-    for (r_addr, reloc) in r.relocations {
-        let (name, kind) = match reloc.target() {
-            object::RelocationTarget::Symbol(symbol_index) => {
-                let symbol = new_.symbol_by_index(symbol_index).unwrap();
-                (symbol.name_bytes().unwrap(), symbol.kind())
-            }
-            object::RelocationTarget::Section(section_index) => {
-                // let section = new_.section_by_index(section_index).unwrap();
-                // section.name_bytes().unwrap()
-                continue;
-            }
-            _ => {
-                b"absolute";
-                continue;
-            }
-        };
-
-        // this isn't quite right, I think
-        if kind == object::SymbolKind::Data {
-            continue;
-        }
-
-        let name = name.to_utf8();
-        let is_import = new.imports.contains_key(&name);
-        let is_export = new.exports.contains_key(&name);
-
-        println!(
-            "{:04x} [{}] {:?} -> {}",
-            r_addr,
-            if is_import {
-                "imp"
-            } else if is_export {
-                "exp"
-            } else {
-                "loc"
-            },
-            kind,
-            name
-        );
     }
 }
 
@@ -550,38 +590,313 @@ fn does_have_exports() {
     }
 }
 
+#[derive(Default)]
+struct ModuleWithRelocations<'a> {
+    // name -> symbol
+    sym_tab: HashMap<&'a str, RelocatedSymbol<'a>>,
+
+    // symbol -> symbols
+    deps: HashMap<&'a str, HashSet<&'a str>>,
+
+    // symbol -> symbols
+    parents: HashMap<&'a str, HashSet<&'a str>>,
+}
+
+impl<'a> ModuleWithRelocations<'a> {
+    fn new(new: FileRef<'a>) -> Self {
+        let mut m = ModuleWithRelocations::default();
+
+        // Build the symbol table
+        for sect in new.sections() {
+            for r in acc_symbols(&new, sect.index()) {
+                m.sym_tab.insert(r.name, r);
+            }
+        }
+
+        let text_section = new.section_by_name_bytes(b"__text").unwrap();
+        let text_index = text_section.index();
+        let text_syms_by_addres = new
+            .symbols()
+            // .filter(|s| s.section_index() == Some(text_index))
+            // .filter(|s| s.section_index() == Some(text_index))
+            // .filter(|s| s)
+            .filter(|s| s.is_definition())
+            .map(|s| (s.address(), s.name().unwrap()))
+            .collect::<BTreeMap<_, _>>();
+
+        // println!("text_syms_by_addres: {:#?}", text_syms_by_addres);
+
+        // println!(
+        //     "checking section {} at address {}",
+        //     text_section.name().unwrap(),
+        //     text_section.address()
+        // );
+
+        // Build the call graph by walking the relocations
+        for (sym_name, sym) in m.sym_tab.iter() {
+            let entry = m.deps.entry(sym_name).or_default();
+            let sym_section = new.section_by_index(sym.section).unwrap();
+            let sym_data = sym_section.data().unwrap();
+
+            for (_addr, reloc) in sym.relocations.iter() {
+                let target = match symbol_name_of_relo(new, reloc.target()) {
+                    Some(name) => name,
+                    None => {
+                        let RelocationTarget::Section(section_index) = reloc.target() else {
+                            panic!("no target for {sym_name}");
+                        };
+
+                        let offset = *_addr as usize;
+                        // println!("reloc: {reloc:?}");
+
+                        let value_bytes = &sym_data[offset as usize..(offset + 8) as usize];
+                        let addend = u64::from_le_bytes([
+                            value_bytes[0],
+                            value_bytes[1],
+                            value_bytes[2],
+                            value_bytes[3],
+                            value_bytes[4],
+                            value_bytes[5],
+                            value_bytes[6],
+                            value_bytes[7],
+                        ]);
+
+                        // let target_section = new.file.section_by_index(section_index).unwrap();
+
+                        // let data = sym.data;
+                        // let data = section.data().unwrap();
+                        // println!(
+                        //     "target section {} at address {} for relo addr {}",
+                        //     section.name().unwrap(),
+                        //     section.address(),
+                        //     *_addr
+                        // );
+                        // if *_addr as usize <= section.address() as usize {
+                        //     println!(
+                        //         "Bad reloc: {sym_name} -> {}, {_addr} is before {}\n{:?}",
+                        //         section.name().unwrap(),
+                        //         section.address(),
+                        //         reloc
+                        //     );
+                        // }
+
+                        // let offset = *_addr as usize;
+                        // let offset = *_addr as usize - section.address() as usize;
+
+                        // println!("value: {:?}", addend);
+                        // println!("value corrected: {:?}", addend - target_section.address());
+                        // let value = addend - target_section.address();
+
+                        // let o = ;
+                        // // println!("{} -> {:?}", sym_name, o);
+                        // o
+                        text_syms_by_addres.get(&addend).unwrap()
+                    }
+                };
+
+                entry.insert(target);
+            }
+        }
+
+        // Build the parent graph
+        for (parent, children) in m.deps.iter() {
+            for child in children {
+                m.parents.entry(child).or_default().insert(parent);
+            }
+        }
+
+        Self {
+            sym_tab: m.sym_tab,
+            deps: m.deps,
+            parents: m.parents,
+        }
+    }
+
+    fn acc_public_parents(&self, name: &'a str) -> Vec<&'a str> {
+        let mut roots = vec![];
+
+        let mut stack = vec![(name, 0)];
+        let mut seen = HashSet::new();
+
+        while let Some((current_name, idx)) = stack.pop() {
+            if !seen.insert(current_name.clone()) {
+                continue;
+            }
+
+            let entry = self.sym_tab.get(current_name).unwrap();
+            let parents = self.parents.get(current_name);
+
+            if entry.sym.is_global() {
+                roots.push(current_name);
+            }
+
+            if let Some(parents) = parents {
+                for parent in parents {
+                    stack.push((parent, idx + 1));
+                }
+            }
+        }
+
+        roots
+    }
+
+    fn print_parents(&self, name: &str) {
+        let mut stack = vec![(name.to_string(), 0)];
+        let mut seen = HashSet::new();
+
+        while let Some((current_name, idx)) = stack.pop() {
+            if !seen.insert(current_name.clone()) {
+                continue;
+            }
+            if idx > 30 {
+                continue;
+            }
+
+            for _ in 0..idx {
+                print!(" ");
+            }
+
+            let entry = self.sym_tab.get(current_name.as_str()).unwrap();
+            let parents = self.parents.get(current_name.as_str());
+            let has_any_parents = parents.map(|p| !p.is_empty()).unwrap_or(false);
+
+            println!(
+                " {} - {} {} {} {}",
+                current_name,
+                if entry.sym.is_global() {
+                    "global"
+                } else {
+                    "local"
+                },
+                entry.offset,
+                entry.section,
+                if !has_any_parents { "❌" } else { "" }
+            );
+
+            if let Some(parents) = parents {
+                for parent in parents {
+                    stack.push((parent.to_string(), idx + 1));
+                }
+            }
+        }
+    }
+}
+
+// Ok("__text")
+// Ok("__const")
+// Ok("__const")
+// Ok("__gcc_except_tab")
+// Ok("__compact_unwind")
+// Ok("__eh_frame")
+//
 /// I think symbols show up in data sections and need to be identified
 #[test]
 fn hmm_imports() {
-    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-old/harness-df4868ea1b5cadad.egexdem49eejgynie32zwugcu.rcgu.o";
+    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-old/harness-df4868ea1b5cadad.3c2tm4jj9yl4umdxtid0wfenb.rcgu.o";
     let f = PathBuf::from(f);
 
     let data = fs::read(&f).unwrap();
 
-    let File::MachO64(old_) = object::read::File::parse(&data as &[u8]).unwrap() else {
+    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
         panic!()
     };
 
-    for sect in old_.sections() {
-        println!("{:?}", sect.name());
+    let graph = ModuleWithRelocations::new(&new);
+
+    for sec in new.sections() {
+        println!("{:?}", sec.name());
     }
 
-    // for sym in old_.symbols() {
-    //     // if sym.is_definition() {
-    //     let sec_name = sym
-    //         .section()
-    //         .index()
-    //         .map(|i| old_.section_by_index(i).unwrap().name());
-    //     println!("{:?} -> {:?} -> {:?}", sym.name(), sym.kind(), sec_name);
-    //     // }
+    //    Options for introspecting the linker
+    //  -why_load
+    //          Log why each object file in a static library is loaded. That is, what symbol was needed.  Also called -whyload for compatibility.
+
+    //  -why_live symbol_name
+    //          Logs a chain of references to symbol_name.  Only applicable with -dead_strip .  It can help debug why something that you think should be dead strip removed is not removed.  See
+    //          -exported_symbols_list for syntax and use of wildcards.
+
+    //  -print_statistics
+    //          Logs information about the amount of memory and time the linker used.
+
+    //  -t      Logs each file (object, archive, or dylib) the linker loads.  Useful for debugging problems with search paths where the wrong library is loaded.
+
+    //  -order_file_statistics
+    //          Logs information about the processing of a -order_file.
+
+    //  -map map_file_path
+    //          Writes a map file to the specified path which details all symbols and their addresses in the output image.
+
+    // let lsym = old.file.symbol_by_name("ltmp7").unwrap();
+    // println!(
+    //     "{:?} {:?} {:?} {:?} {:?}",
+    //     lsym.address(),
+    //     lsym.name(),
+    //     lsym.kind(),
+    //     lsym.section(),
+    //     old.file
+    //         .section_by_index(lsym.section_index().unwrap())
+    //         .unwrap()
+    //         .name()
+    // );
+
+    // for export in old.file.exports().unwrap() {
+    //     println!("{:?} {:?}", export.address(), export.name().to_utf8());
     // }
 
-    // for sectin in old_.sections() {
-    //     println!("{:?} -> {:?}", sectin.name(), sectin.kind());
-    //     for (addr, relo) in sectin.relocations() {
-    //         let name = name_of_relocation_target(&old_, relo.target());
-    //         println!("{} -> {:?}", addr, name);
-    //         // println!("{:?}", relo);
+    // for sym in old.file.symbols() {
+    //     if sym.index() == lsym.index() {
+    //         println!("{:?} {:?}", sym.address(), sym.name());
     //     }
+
+    //     // if sym.address() == lsym.address() {
+    //     // println!("{:?} {:?}", sym.address(), sym.name());
+    //     // }
+    //     // println!("{:?} {:?}", sym.address(), sym.name());
     // }
+
+    // println!("{:#?}", graph.deps);
+    // println!("{:#?}", graph.parents["__ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h8c5c4774279549f9E"]);
+    // println!("{:#?}", graph.deps["ltmp6"]);
+    // println!("{:#?}", graph.parents["ltmp6"]);
+}
+
+#[test]
+fn where_are_you_used() {
+    let f= "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-df4868ea1b5cadad.egexdem49eejgynie32zwugcu.rcgu.o";
+    let f = PathBuf::from(f);
+    let data = fs::read(&f).unwrap();
+    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
+        panic!()
+    };
+    let mut old = Computed::new(&new);
+    let graph = ModuleWithRelocations::new(&new);
+    let imports = new.imports().unwrap();
+    let im = imports
+        .iter()
+        .find(|e| {
+            e.name().to_utf8()
+                == "__ZN7harness13zoom_controls28_$u7b$$u7b$closure$u7d$$u7d$17h7a3c177fab0c21c7E"
+        })
+        .unwrap();
+
+    for (dep, children) in graph.deps.iter() {
+        if children.contains(im.name().to_utf8()) {
+            println!("{dep:?}");
+        }
+    }
+
+    // for import in new.imports().unwrap() {
+    //     println!("{:?}", import.name().to_utf8());
+    // }
+}
+
+#[test]
+fn build_internal_call_graph() {
+    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-ce721ccd4e3f382d.9wlujqu2r4bjdin21bprnpfdb.rcgu.o";
+    let f = PathBuf::from(f);
+    let data = fs::read(&f).unwrap();
+    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
+        panic!()
+    };
+    let graph = ModuleWithRelocations::new(&new);
 }

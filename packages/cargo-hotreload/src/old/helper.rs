@@ -726,3 +726,166 @@ fn dump_file(
 // }
 
 // assert!(new_relocations.next().is_none());
+
+fn print_relocs(
+    new_: &MachOFile<'_, MachHeader64<Endianness>>,
+    new: &Computed<'_, '_>,
+    r: RelocatedSymbol<'_>,
+) {
+    for (r_addr, reloc) in r.relocations {
+        let (name, kind) = match reloc.target() {
+            object::RelocationTarget::Symbol(symbol_index) => {
+                let symbol = new_.symbol_by_index(symbol_index).unwrap();
+                (symbol.name_bytes().unwrap(), symbol.kind())
+            }
+            object::RelocationTarget::Section(section_index) => {
+                // let section = new_.section_by_index(section_index).unwrap();
+                // section.name_bytes().unwrap()
+                continue;
+            }
+            _ => {
+                b"absolute";
+                continue;
+            }
+        };
+
+        // this isn't quite right, I think
+        if kind == object::SymbolKind::Data {
+            continue;
+        }
+
+        let name = name.to_utf8();
+        let is_import = new.imports.contains_key(&name);
+        let is_export = new.exports.contains_key(&name);
+
+        println!(
+            "{:04x} [{}] {:?} -> {}",
+            r_addr,
+            if is_import {
+                "imp"
+            } else if is_export {
+                "exp"
+            } else {
+                "loc"
+            },
+            kind,
+            name
+        );
+    }
+}
+
+// println!("{:?}", section.name());
+// let text_idx = new_.section_by_name_bytes(b"__text").unwrap().index();
+// // let changed_text = self.acc_changed(&old_, &new_, text_idx);
+// println!("changed: {:#?}", changed);
+
+// if new_file.path.file_name().unwrap()
+//     == "harness-ce721ccd4e3f382d.9wlujqu2r4bjdin21bprnpfdb.rcgu.o"
+// {
+//     for local in changed_text {
+//         println!("local: {local}");
+//         if local.starts_with("l") {
+//             continue;
+//         }
+
+//         // self.modified_symbols.insert(local.to_string());
+//     }
+// }
+
+// Now build the call chain of dirty stuff
+// let new_deps = ModuleWithRelocations::new(&new);
+
+// let mut parents = local_modified
+//     .iter()
+//     .map(|f| f.as_str())
+//     .filter(|s| s.starts_with("l"))
+//     .collect::<Vec<_>>();
+
+// println!("parents: {:#?}", parents);
+// self.modified_symbols
+//     .extend(parents.iter().map(|s| s.to_string()));
+
+// let old_deps = ModuleWithRelocations::new(&old);
+
+// for (dep, children) in new_deps.deps.iter() {
+//     for child in children {
+//         if child.starts_with("l") || dep.starts_with("l") {
+//             println!("skipping dep: {dep:?} -> {child:?}");
+//             continue;
+//         }
+
+//         self.deps
+//             .entry(dep.to_string())
+//             .or_default()
+//             .insert(child.to_string());
+//     }
+// }
+
+// for (dep, children) in old_deps.deps.iter() {
+//     for child in children {
+//         if child.starts_with("l") || dep.starts_with("l") {
+//             continue;
+//         }
+
+//         self.deps
+//             .entry(dep.to_string())
+//             .or_default()
+//             .insert(child.to_string());
+//     }
+// }
+
+// for (parent, children) in new_deps.parents.iter() {
+//     for child in children {
+//         self.parents
+//             .entry(parent.to_string())
+//             .or_default()
+//             .insert(child.to_string());
+//     }
+// }
+
+// // let mut seen = HashSet::new();
+
+// // println!("parents: {:#?}", new_deps.parents);
+// while let Some(parent) = parents.pop() {
+//     let sym = new_deps.sym_tab.get(parent);
+//     if let Some(sym) = sym {
+//         if sym.sym.is_global() {
+//             self.modified_symbols.insert(parent.to_string());
+//         }
+//     }
+
+//     //     if seen.insert(parent.clone()) {
+//     if let Some(children) = new_deps.parents.get(parent) {
+//         for child in children {
+//             println!("parent: {parent:?} -> child: {child:?}");
+//             parents.push(child);
+//         }
+//     }
+//     // }
+// }
+
+// for import in new.file.imports().unwrap() {
+//     if self.modified_symbols.contains(import.name().to_utf8()) {
+//         // println!("import: {:?}", import.name().to_utf8());
+//         // self.modified_symbols
+//         //     .insert(import.name().unwrap().to_string());
+//     }
+// }
+
+// if !is_good {
+//     for e in new_.exports().unwrap() {
+//         // println!("{:?}", e.name().to_utf8());
+//     }
+// }
+
+// println!("seen: {:#?}", seen);
+
+// for s in seen {
+//     if let Some(sym) = new_deps.sym_tab.get(s.as_str()) {
+//         // if sym.sym.is_global() {
+//         self.modified_symbols.insert(s);
+//         // }
+//     } else if new_deps.deps.contains_key(s.as_str()) {
+//         self.modified_symbols.insert(s);
+//     }
+// }
