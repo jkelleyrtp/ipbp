@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use memmap::{Mmap, MmapOptions};
 use std::{
     borrow,
@@ -15,6 +15,7 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     path::Path,
 };
+use tokio::process::Command;
 
 use itertools::Itertools;
 use object::{
@@ -22,7 +23,7 @@ use object::{
     read::macho::{MachOFile, MachOSection, MachOSymbol, Nlist},
     Endianness, Export, File, Import, Object, ObjectSection, ObjectSegment, ObjectSymbol,
     ObjectSymbolTable, ReadRef, Relocation, RelocationTarget, SectionIndex, SectionKind,
-    SymbolIndex, SymbolKind,
+    SymbolIndex, SymbolKind, SymbolScope,
 };
 use pretty_assertions::Comparison;
 use pretty_hex::{Hex, HexConfig};
@@ -32,14 +33,138 @@ async fn works() {
     main().await.unwrap();
 }
 
+#[tokio::test]
+async fn _attempt_partial_link() {
+    attempt_partial_link().await;
+}
+
+async fn attempt_partial_link() {
+    let mut d = ObjectDiff::new().unwrap();
+    d.load().unwrap();
+
+    let all_exports = d
+        .new
+        .iter()
+        .flat_map(|(_, f)| f.macho.exports().unwrap())
+        .map(|e| e.name().to_utf8())
+        .collect::<HashSet<_>>();
+
+    let mut adrp_imports = HashSet::new();
+
+    let mut satisfied_exports = HashSet::new();
+
+    let mut files = d.modified_files.iter().collect::<Vec<_>>();
+    files.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Figure out which symbols are required from *existing* code
+    // We're going to create a stub `.o` file that satisfies these by jumping into the original code via a dynamic lookup / and or literally just manually doing it
+    for fil in files.iter() {
+        let f = d
+            .new
+            .get(fil.0.file_name().unwrap().to_str().unwrap())
+            .unwrap();
+
+        // println!(
+        //     "------ imports for {:?} ------",
+        //     f.path.file_name().unwrap(),
+        // );
+        let i = f.macho.imports().unwrap();
+        for i in i {
+            if all_exports.contains(i.name().to_utf8()) {
+                adrp_imports.insert(i.name().to_utf8());
+                // adrp_imports.insert(strip_mangled(i.name().to_utf8()));
+                println!("-> {:?}", i.name().to_utf8());
+            } else {
+                println!("-? {:?}", i.name().to_utf8());
+            }
+        }
+
+        for e in f.macho.exports().unwrap() {
+            satisfied_exports.insert(e.name().to_utf8());
+        }
+    }
+
+    for s in satisfied_exports.iter() {
+        adrp_imports.remove(s);
+    }
+
+    let olist = files.iter().map(|(f, s)| f).collect::<Vec<_>>();
+
+    // println!("directly changed files: {:#?}", olist);
+
+    for (s, f) in d.old.iter() {
+        let i = f.macho.exports().unwrap();
+        if i.iter().any(|i| i.name().to_utf8() == "_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11") {
+            println!("found: {s:?} in OLD exports");
+        }
+    }
+
+    for (s, f) in d.new.iter() {
+        let i = f.macho.exports().unwrap();
+        // if i.iter().any(|i| {
+        //     i.name().to_utf8()
+        //         == "harness::AddingLogger::_$u7b$$u7b$closure$u7d$$u7d$::h07dfeccdbd10142a"
+        // }) {
+        if i.iter()
+            .any(|i| i.name().to_utf8().contains("3fmt17h455abb35572b9c11E"))
+        {
+            // if i.iter().any(|i| i.name().to_utf8() == "_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11") {
+            println!("found: {s:?} in exports");
+        }
+        // if i.iter().any(|i| i.name().to_utf8() == "__ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17h4e710f94be547818E") {
+        //     println!("found: {s:?} in exports");
+        // }
+    }
+
+    println!("adrp imports: {:#?}", adrp_imports);
+
+    // we are writing this:
+    // __ZN93_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$3fmt17h455abb35572b9c11E
+    //
+    // but we should be writing this:
+    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11
+
+    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$3fmt17h455abb35572b9c11
+    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11
+
+    let addressed = adrp_imports
+        .iter()
+        .enumerate()
+        .map(|(idx, k)| (*k, idx as u64 + 40000000))
+        .collect::<HashMap<_, _>>();
+
+    let stub = build_stub(addressed).unwrap();
+    let stub_file = workspace_dir().join("stub.o");
+    std::fs::write(&stub_file, stub).unwrap();
+
+    let o = Command::new("cc")
+        .args(olist)
+        .arg(stub_file)
+        // .arg("-r")
+        .arg("-dylib")
+        .arg("-Wl,-undefined,dynamic_lookup")
+        // .arg("-Wl,-unexported_symbol,_main")
+        .arg("-arch")
+        .arg("arm64")
+        // .arg("-dead_strip")
+        .arg("-o")
+        .arg(workspace_dir().join("partial.o"))
+        .output()
+        .await
+        .unwrap();
+
+    let err = String::from_utf8_lossy(&o.stderr);
+    println!("err: {err}");
+}
+
 pub async fn main() -> anyhow::Result<()> {
     ObjectDiff::new().unwrap().load();
     Ok(())
 }
 
 struct ObjectDiff {
-    old: Vec<LoadedFile>,
-    new: Vec<LoadedFile>,
+    old: BTreeMap<String, LoadedFile>,
+    new: BTreeMap<String, LoadedFile>,
     matched: usize,
     mismatched: usize,
     missing: usize,
@@ -67,15 +192,19 @@ impl ObjectDiff {
     }
 
     fn load(&mut self) -> Result<()> {
-        for x in 0..self.new.len() {
-            self.load_file(x)?;
-        }
+        let num_left = self.old.len();
+        let num_right = self.new.len();
 
-        println!("matched: {}", self.matched);
-        println!("mismatched: {}", self.mismatched);
-        println!("missing: {}", self.missing);
-        // println!("modified: {:#?}", self.modified_files);
-        // println!("changed chain: {:#?}", self.modified_symbols);
+        let keys = self.new.keys().cloned().collect::<Vec<_>>();
+        for (idx, f) in keys.iter().enumerate() {
+            println!("----- {:?} {}/{} -----", f, idx, num_right);
+            let changed_before = self.modified_symbols.len();
+            self.load_file(f)?;
+            let changed_after = self.modified_symbols.len();
+            if changed_after > changed_before {
+                println!("❌ -> {}", changed_after - changed_before);
+            }
+        }
 
         for (parent, children) in self.deps.iter() {
             for child in children {
@@ -86,9 +215,14 @@ impl ObjectDiff {
             }
         }
 
-        for changed in self.modified_symbols.iter() {
-            self.print_parent(changed);
-        }
+        // let s = self.modified_symbols.iter().sorted().collect::<Vec<_>>();
+        // println!("sorted: {:#?}", s);
+
+        // println!("modified: {:#?}", self.modified_files);
+
+        // for changed in self.modified_symbols.iter() {
+        //     self.print_parent(changed);
+        // }
 
         // print the call graph from "_main"
         // self.print_call_graph("_main", 0);
@@ -148,67 +282,26 @@ impl ObjectDiff {
         }
     }
 
-    fn load_file(&mut self, idx: usize) -> Result<()> {
-        use object::read::File;
-
-        let num_left = self.old.len();
-        let num_right = self.new.len();
-
-        let new_file = &self.new[idx];
-        let left = self
-            .old
-            .iter()
-            .find(|l| l.path.file_name() == new_file.path.file_name());
-
-        let Some(left) = left else {
-            println!("no left for {:?}", new_file.path);
-            self.modified_files
-                .entry(new_file.path.clone())
-                .or_default();
-
+    fn load_file(&mut self, name: &str) -> Result<()> {
+        let new = &self.new[name];
+        let Some(old) = self.old.get(name) else {
+            println!("no left for {:?}", new.path);
+            self.modified_files.entry(new.path.clone()).or_default();
             return Ok(());
         };
 
-        println!(
-            "----- {:?} {}/{} -----",
-            new_file.path.file_name(),
-            idx,
-            num_right
-        );
-
-        // We need to deal with macho directly for now... eventually
-        let File::MachO64(old_) = File::parse(&left.mmap.deref() as &[u8])? else {
-            panic!()
-        };
-        let File::MachO64(new_) = File::parse(&new_file.mmap.deref() as &[u8])? else {
-            panic!()
-        };
-
-        // Ok("__text")
-        // Ok("__gcc_except_tab")
-        // Ok("__const")
-        // Ok("__const")
-        // Ok("__literal16")
-        // Ok("__literal8")
-
-        let dep_graph = ModuleWithRelocations::new(&new_);
-
-        for section in new_.sections() {
+        for section in new.macho.sections() {
             let n = section.name().unwrap();
             if n == "__text" || n == "__const" || n.starts_with("__literal") {
-                let changed = self.acc_changed(&old_, &new_, section.index());
-                // println!("changed: {:#?}", changed);
-                if !changed.is_empty() {
-                    println!("section: {n}");
-                }
+                let changed = self.acc_changed(&old.macho, &new.macho, section.index());
                 for n in &changed {
-                    let parents = dep_graph.acc_public_parents(n);
+                    let parents = new.acc_public_parents(n);
 
                     self.modified_symbols
                         .extend(parents.iter().map(|p| p.to_string()));
 
                     self.modified_files
-                        .entry(new_file.path.clone())
+                        .entry(new.path.clone())
                         .or_default()
                         .extend(parents.iter().map(|p| p.to_string()));
                 }
@@ -220,10 +313,10 @@ impl ObjectDiff {
 
     fn acc_changed(
         &self,
-        old: &MachOFile<'_, MachHeader64<Endianness>>,
-        new: &MachOFile<'_, MachHeader64<Endianness>>,
+        old: &'static MachOFile<'_, MachHeader64<Endianness>>,
+        new: &'static MachOFile<'_, MachHeader64<Endianness>>,
         section_idx: SectionIndex,
-    ) -> HashSet<String> {
+    ) -> HashSet<&'static str> {
         let mut local_modified = HashSet::new();
 
         // Accumulate modified symbols using masking in functions
@@ -234,38 +327,33 @@ impl ObjectDiff {
             .collect::<HashMap<_, _>>();
 
         for right in relocated_new {
-            // let is_exported = new.exports.contains_key(&right.name);
-
             // temp assert while in dev
             let Some(left) = relocated_old.remove(right.name) else {
-                local_modified.insert(right.name.to_string());
-                // println!("no right for {}", right.name);
+                local_modified.insert(right.name);
                 continue;
             };
 
-            match compare_masked(old, new, &left, &right) {
-                true => {}
-                false => {
-                    println!(
-                        "Sym [{} ] - {:?}",
-                        right.sym.address(),
-                        // if is_exported { "export" } else { "local" },
-                        right.sym.name().unwrap(),
-                        // pretty_hex::config_hex(
-                        //     &right.data,
-                        //     HexConfig {
-                        //         display_offset: right.sym.address() as usize,
-                        //         ..Default::default()
-                        //     },
-                        // )
-                    );
-                    println!("❌ Symbols do not match");
-                    println!();
+            // If the contents of the assembly changed, track it
+            if !compare_masked(old, new, &left, &right) {
+                // println!(
+                //     "Sym [{} ] - {:?}",
+                //     right.sym.address(),
+                //     // if is_exported { "export" } else { "local" },
+                //     right.sym.name().unwrap(),
+                //     // pretty_hex::config_hex(
+                //     //     &right.data,
+                //     //     HexConfig {
+                //     //         display_offset: right.sym.address() as usize,
+                //     //         ..Default::default()
+                //     //     },
+                //     // )
+                // );
+                // println!("❌ Symbols do not match");
+                // println!();
 
-                    // names might be different, insert both
-                    local_modified.insert(left.name.to_string());
-                    local_modified.insert(right.name.to_string());
-                }
+                // names might be different, insert both
+                local_modified.insert(left.name);
+                local_modified.insert(right.name);
             }
         }
 
@@ -273,70 +361,248 @@ impl ObjectDiff {
     }
 }
 
+/// A file loaded into memory with its analysis
+///
+/// We leak the module to make it easier to deal with its contents
 struct LoadedFile {
     path: PathBuf,
-    file: std::fs::File,
-    mmap: Mmap,
+    open_file: std::fs::File,
+    mmap: &'static Mmap,
+
+    macho: &'static MachOFile<'static, MachHeader64<Endianness>>,
+
+    // name -> symbol
+    sym_tab: HashMap<&'static str, RelocatedSymbol<'static>>,
+
+    // symbol -> symbols
+    deps: HashMap<&'static str, HashSet<&'static str>>,
+
+    // symbol -> symbols
+    parents: HashMap<&'static str, HashSet<&'static str>>,
 }
 
 impl LoadedFile {
-    fn from_dir(dir: &Path) -> anyhow::Result<Vec<Self>> {
+    fn from_dir(dir: &Path) -> anyhow::Result<BTreeMap<String, Self>> {
         let dir = std::fs::read_dir(dir)?;
-        let mut files = dir
-            .flatten()
-            .map(|f| f.path())
-            .filter(|p| p.extension() == Some(OsStr::new("o")))
-            .map(|p| Self::new(p))
-            .collect::<Result<Vec<_>, _>>()?;
+        let mut out = BTreeMap::new();
+        for f in dir.flatten() {
+            let p = f.path();
+            if p.extension() != Some(OsStr::new("o")) {
+                continue;
+            }
+            out.insert(
+                p.file_name().unwrap().to_string_lossy().to_string(),
+                Self::new(p)?,
+            );
+        }
 
-        files.sort_by(|a, b| a.path.cmp(&b.path));
-
-        Ok(files)
+        Ok(out)
     }
 
     fn new(path: PathBuf) -> anyhow::Result<Self> {
         let file = std::fs::File::open(&path)?;
         let mmap = unsafe { MmapOptions::new().map(&file).unwrap() };
-        Ok(Self { path, file, mmap })
+        let mmap: &'static Mmap = Box::leak(Box::new(mmap));
+        let f = File::parse(mmap.deref() as &[u8])?;
+        let File::MachO64(macho) = f else { panic!() };
+        let macho = Box::leak(Box::new(macho));
+
+        let mut loaded_file = Self {
+            path,
+            open_file: file,
+            mmap,
+            macho,
+            deps: Default::default(),
+            parents: Default::default(),
+            sym_tab: Default::default(),
+        };
+
+        loaded_file.fill();
+
+        Ok(loaded_file)
+    }
+
+    fn fill(&mut self) {
+        // Build the symbol table
+        for sect in self.macho.sections() {
+            for r in acc_symbols(&self.macho, sect.index()) {
+                self.sym_tab.insert(r.name, r);
+            }
+        }
+
+        let text_section = self.macho.section_by_name_bytes(b"__text").unwrap();
+        let text_index = text_section.index();
+        let text_syms_by_addres = self
+            .macho
+            .symbols()
+            // .filter(|s| s.section_index() == Some(text_index))
+            // .filter(|s| s.section_index() == Some(text_index))
+            // .filter(|s| s)
+            .filter(|s| s.is_definition())
+            .map(|s| (s.address(), s.name().unwrap()))
+            .collect::<BTreeMap<_, _>>();
+
+        // println!("text_syms_by_addres: {:#?}", text_syms_by_addres);
+
+        // println!(
+        //     "checking section {} at address {}",
+        //     text_section.name().unwrap(),
+        //     text_section.address()
+        // );
+
+        // Build the call graph by walking the relocations
+        for (sym_name, sym) in self.sym_tab.iter() {
+            let entry = self.deps.entry(sym_name).or_default();
+            let sym_section = self.macho.section_by_index(sym.section).unwrap();
+            let sym_data = sym_section.data().unwrap();
+
+            for (_addr, reloc) in sym.relocations.iter() {
+                let target = match symbol_name_of_relo(self.macho, reloc.target()) {
+                    Some(name) => name,
+                    None => {
+                        let RelocationTarget::Section(section_index) = reloc.target() else {
+                            panic!("no target for {sym_name}");
+                        };
+
+                        let offset = *_addr as usize;
+                        // println!("reloc: {reloc:?}");
+
+                        let value_bytes = &sym_data[offset as usize..(offset + 8) as usize];
+                        let addend = u64::from_le_bytes([
+                            value_bytes[0],
+                            value_bytes[1],
+                            value_bytes[2],
+                            value_bytes[3],
+                            value_bytes[4],
+                            value_bytes[5],
+                            value_bytes[6],
+                            value_bytes[7],
+                        ]);
+
+                        // let target_section = new.file.section_by_index(section_index).unwrap();
+
+                        // let data = sym.data;
+                        // let data = section.data().unwrap();
+                        // println!(
+                        //     "target section {} at address {} for relo addr {}",
+                        //     section.name().unwrap(),
+                        //     section.address(),
+                        //     *_addr
+                        // );
+                        // if *_addr as usize <= section.address() as usize {
+                        //     println!(
+                        //         "Bad reloc: {sym_name} -> {}, {_addr} is before {}\n{:?}",
+                        //         section.name().unwrap(),
+                        //         section.address(),
+                        //         reloc
+                        //     );
+                        // }
+
+                        // let offset = *_addr as usize;
+                        // let offset = *_addr as usize - section.address() as usize;
+
+                        // println!("value: {:?}", addend);
+                        // println!("value corrected: {:?}", addend - target_section.address());
+                        // let value = addend - target_section.address();
+
+                        // let o = ;
+                        // // println!("{} -> {:?}", sym_name, o);
+                        // o
+                        text_syms_by_addres.get(&addend).unwrap()
+                    }
+                };
+
+                entry.insert(target);
+            }
+        }
+
+        // Build the parent graph
+        for (parent, children) in self.deps.iter() {
+            for child in children {
+                self.parents.entry(child).or_default().insert(parent);
+            }
+        }
+    }
+
+    fn acc_public_parents(&self, name: &'static str) -> Vec<&'static str> {
+        let mut roots = vec![];
+
+        let mut stack = vec![(name, 0)];
+        let mut seen = HashSet::new();
+
+        while let Some((current_name, idx)) = stack.pop() {
+            if !seen.insert(current_name.clone()) {
+                continue;
+            }
+
+            let entry = self.sym_tab.get(current_name).unwrap();
+            let parents = self.parents.get(current_name);
+
+            if !current_name.starts_with("l") {
+                roots.push(current_name);
+            }
+
+            // if entry.sym.name().un
+
+            // if entry.sym.is_global() {
+            //     roots.push(current_name);
+            // } else {
+            //     println!("local: {current_name}");
+            // }
+
+            if let Some(parents) = parents {
+                for parent in parents {
+                    stack.push((parent, idx + 1));
+                }
+            }
+        }
+
+        roots
+    }
+
+    fn print_parents(&self, name: &str) {
+        let mut stack = vec![(name.to_string(), 0)];
+        let mut seen = HashSet::new();
+
+        while let Some((current_name, idx)) = stack.pop() {
+            if !seen.insert(current_name.clone()) {
+                continue;
+            }
+            if idx > 30 {
+                continue;
+            }
+
+            for _ in 0..idx {
+                print!(" ");
+            }
+
+            let entry = self.sym_tab.get(current_name.as_str()).unwrap();
+            let parents = self.parents.get(current_name.as_str());
+            let has_any_parents = parents.map(|p| !p.is_empty()).unwrap_or(false);
+
+            println!(
+                " {} - {} {} {} {}",
+                current_name,
+                if entry.sym.is_global() {
+                    "global"
+                } else {
+                    "local"
+                },
+                entry.offset,
+                entry.section,
+                if !has_any_parents { "❌" } else { "" }
+            );
+
+            if let Some(parents) = parents {
+                for parent in parents {
+                    stack.push((parent.to_string(), idx + 1));
+                }
+            }
+        }
     }
 }
 
 type FileRef<'data> = &'data MachOFile<'data, MachHeader64<Endianness>>;
-
-struct Computed<'data, 'file> {
-    file: FileRef<'data>,
-    exports: HashMap<&'data str, Export<'data>>,
-    imports: HashMap<&'data str, Import<'data>>,
-    _phantom: PhantomData<&'file ()>,
-    // text: MachOSection<'data, 'file, MachHeader64<Endianness>>,
-    // text_data: &'data [u8],
-    // sorted_functions: Vec<MachOSymbol<'data, 'file, MachHeader64<Endianness>>>,
-}
-
-impl<'data, 'file> Computed<'data, 'file> {
-    fn new(file: &'data MachOFile<'data, MachHeader64<Endianness>>) -> Self {
-        let exports = file
-            .exports()
-            .unwrap()
-            .iter()
-            .map(|e| (e.name().to_utf8(), *e))
-            .collect::<HashMap<_, _>>();
-
-        let imports = file
-            .imports()
-            .unwrap()
-            .iter()
-            .map(|i| (i.name().to_utf8(), *i))
-            .collect::<HashMap<_, _>>();
-
-        Self {
-            file,
-            exports,
-            imports,
-            _phantom: PhantomData,
-        }
-    }
-}
 
 fn stable_sort_symbols(
     a: &MachOSymbol<MachHeader64<Endianness>>,
@@ -471,7 +737,6 @@ fn compare_masked<'a>(
 
     // Make sure the names match
     if left.name != right.name {
-        println!("sym name doesn't: {:?} != {:?}", left.name, right.name);
         return false;
     }
 
@@ -501,7 +766,6 @@ fn compare_masked<'a>(
         if left_name != right_name {
             // if the target is a locally defined symbol, then it might be the same
             // todo(jon): hash the masked contents
-            println!("reloc target doesn't match: {left_name:?} != {right_name:?}");
             return false;
         }
 
@@ -574,6 +838,120 @@ struct CachedObjectFile {
 
 type DepGraph = HashMap<SymbolIndex, HashSet<SymbolIndex>>;
 
+/// Builds an object file that satisfies the imports
+///
+/// Creates stub functions that jump to known addresses in a target process.
+///
+/// .section __TEXT,__text
+/// .globl __ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17h4e710f94be547818E
+/// .p2align 2
+/// __ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17h4e710f94be547818E:
+///     // Load 64-bit address using immediate values
+///     movz x9, #0xCDEF          // Bottom 16 bits
+///     movk x9, #0x89AB, lsl #16 // Next 16 bits
+///     movk x9, #0x4567, lsl #32 // Next 16 bits
+///     movk x9, #0x0123, lsl #48 // Top 16 bits
+///
+///     // Branch to the loaded address
+///     br x9
+fn build_stub(adrp_imports: HashMap<&str, u64>) -> Result<Vec<u8>> {
+    use object::{
+        write::{Object, Section, Symbol, SymbolSection},
+        BinaryFormat, Endianness, SectionKind, SymbolFlags, SymbolKind, SymbolScope,
+    };
+    // Create a new ARM64 object file
+    let mut obj = Object::new(
+        BinaryFormat::MachO,
+        object::Architecture::Aarch64,
+        Endianness::Little,
+    );
+
+    // Add a text section for our trampolines
+    let text_section = obj.add_section(Vec::new(), ".text".into(), SectionKind::Text);
+
+    // For each symbol, create a trampoline that loads the immediate address and jumps to it
+    for (name, addr) in adrp_imports {
+        let mut trampoline = Vec::new();
+
+        // Break down the 64-bit address into 16-bit chunks
+        let addr0 = (addr & 0xFFFF) as u16; // Bits 0-15
+        let addr1 = ((addr >> 16) & 0xFFFF) as u16; // Bits 16-31
+        let addr2 = ((addr >> 32) & 0xFFFF) as u16; // Bits 32-47
+        let addr3 = ((addr >> 48) & 0xFFFF) as u16; // Bits 48-63
+
+        // MOVZ x9, #addr0
+        let movz = 0xD2800009 | ((addr0 as u32) << 5);
+        trampoline.extend_from_slice(&movz.to_le_bytes());
+
+        // MOVK x9, #addr1, LSL #16
+        let movk1 = 0xF2A00009 | ((addr1 as u32) << 5);
+        trampoline.extend_from_slice(&movk1.to_le_bytes());
+
+        // MOVK x9, #addr2, LSL #32
+        let movk2 = 0xF2C00009 | ((addr2 as u32) << 5);
+        trampoline.extend_from_slice(&movk2.to_le_bytes());
+
+        // MOVK x9, #addr3, LSL #48
+        let movk3 = 0xF2E00009 | ((addr3 as u32) << 5);
+        trampoline.extend_from_slice(&movk3.to_le_bytes());
+
+        // BR x9 - Branch to the address in x9
+        let br: u32 = 0xD61F0120;
+        trampoline.extend_from_slice(&br.to_le_bytes());
+
+        // Add the trampoline to the text section
+        let symbol_offset = obj.append_section_data(text_section, &trampoline, 4);
+
+        // we are writing this:
+        // __ZN93_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$3fmt17h455abb35572b9c11E
+        //
+        // but we should be writing this:
+        //       _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11
+        // let name = strip_mangled(name);
+
+        // // let name = name.trim_start_matches("_");
+        // println!("name: {name}");
+        let name = if name.starts_with("_") {
+            &name[1..]
+        } else {
+            name
+        };
+
+        // Add the symbol
+        obj.add_symbol(Symbol {
+            name: name.into(),
+            value: symbol_offset,
+            size: trampoline.len() as u64,
+            kind: SymbolKind::Text,
+            scope: SymbolScope::Dynamic,
+            weak: false,
+            section: SymbolSection::Section(text_section),
+            flags: SymbolFlags::None,
+        });
+    }
+
+    obj.write().context("Failed to write object file")
+}
+
+fn strip_mangled(name: &str) -> &str {
+    if !name.starts_with("__ZN") {
+        return name;
+    }
+
+    let shorter = name.trim_start_matches("__ZN").trim_end_matches("E");
+
+    // pluck off the leading numbers
+    let mut start = 0;
+    for c in shorter.chars() {
+        if !c.is_numeric() {
+            break;
+        }
+        start += 1;
+    }
+
+    &shorter[start..]
+}
+
 #[test]
 fn does_have_exports() {
     let f =
@@ -588,315 +966,4 @@ fn does_have_exports() {
     for export in old_.exports().unwrap() {
         println!("{:?}", export.name().to_utf8());
     }
-}
-
-#[derive(Default)]
-struct ModuleWithRelocations<'a> {
-    // name -> symbol
-    sym_tab: HashMap<&'a str, RelocatedSymbol<'a>>,
-
-    // symbol -> symbols
-    deps: HashMap<&'a str, HashSet<&'a str>>,
-
-    // symbol -> symbols
-    parents: HashMap<&'a str, HashSet<&'a str>>,
-}
-
-impl<'a> ModuleWithRelocations<'a> {
-    fn new(new: FileRef<'a>) -> Self {
-        let mut m = ModuleWithRelocations::default();
-
-        // Build the symbol table
-        for sect in new.sections() {
-            for r in acc_symbols(&new, sect.index()) {
-                m.sym_tab.insert(r.name, r);
-            }
-        }
-
-        let text_section = new.section_by_name_bytes(b"__text").unwrap();
-        let text_index = text_section.index();
-        let text_syms_by_addres = new
-            .symbols()
-            // .filter(|s| s.section_index() == Some(text_index))
-            // .filter(|s| s.section_index() == Some(text_index))
-            // .filter(|s| s)
-            .filter(|s| s.is_definition())
-            .map(|s| (s.address(), s.name().unwrap()))
-            .collect::<BTreeMap<_, _>>();
-
-        // println!("text_syms_by_addres: {:#?}", text_syms_by_addres);
-
-        // println!(
-        //     "checking section {} at address {}",
-        //     text_section.name().unwrap(),
-        //     text_section.address()
-        // );
-
-        // Build the call graph by walking the relocations
-        for (sym_name, sym) in m.sym_tab.iter() {
-            let entry = m.deps.entry(sym_name).or_default();
-            let sym_section = new.section_by_index(sym.section).unwrap();
-            let sym_data = sym_section.data().unwrap();
-
-            for (_addr, reloc) in sym.relocations.iter() {
-                let target = match symbol_name_of_relo(new, reloc.target()) {
-                    Some(name) => name,
-                    None => {
-                        let RelocationTarget::Section(section_index) = reloc.target() else {
-                            panic!("no target for {sym_name}");
-                        };
-
-                        let offset = *_addr as usize;
-                        // println!("reloc: {reloc:?}");
-
-                        let value_bytes = &sym_data[offset as usize..(offset + 8) as usize];
-                        let addend = u64::from_le_bytes([
-                            value_bytes[0],
-                            value_bytes[1],
-                            value_bytes[2],
-                            value_bytes[3],
-                            value_bytes[4],
-                            value_bytes[5],
-                            value_bytes[6],
-                            value_bytes[7],
-                        ]);
-
-                        // let target_section = new.file.section_by_index(section_index).unwrap();
-
-                        // let data = sym.data;
-                        // let data = section.data().unwrap();
-                        // println!(
-                        //     "target section {} at address {} for relo addr {}",
-                        //     section.name().unwrap(),
-                        //     section.address(),
-                        //     *_addr
-                        // );
-                        // if *_addr as usize <= section.address() as usize {
-                        //     println!(
-                        //         "Bad reloc: {sym_name} -> {}, {_addr} is before {}\n{:?}",
-                        //         section.name().unwrap(),
-                        //         section.address(),
-                        //         reloc
-                        //     );
-                        // }
-
-                        // let offset = *_addr as usize;
-                        // let offset = *_addr as usize - section.address() as usize;
-
-                        // println!("value: {:?}", addend);
-                        // println!("value corrected: {:?}", addend - target_section.address());
-                        // let value = addend - target_section.address();
-
-                        // let o = ;
-                        // // println!("{} -> {:?}", sym_name, o);
-                        // o
-                        text_syms_by_addres.get(&addend).unwrap()
-                    }
-                };
-
-                entry.insert(target);
-            }
-        }
-
-        // Build the parent graph
-        for (parent, children) in m.deps.iter() {
-            for child in children {
-                m.parents.entry(child).or_default().insert(parent);
-            }
-        }
-
-        Self {
-            sym_tab: m.sym_tab,
-            deps: m.deps,
-            parents: m.parents,
-        }
-    }
-
-    fn acc_public_parents(&self, name: &'a str) -> Vec<&'a str> {
-        let mut roots = vec![];
-
-        let mut stack = vec![(name, 0)];
-        let mut seen = HashSet::new();
-
-        while let Some((current_name, idx)) = stack.pop() {
-            if !seen.insert(current_name.clone()) {
-                continue;
-            }
-
-            let entry = self.sym_tab.get(current_name).unwrap();
-            let parents = self.parents.get(current_name);
-
-            if entry.sym.is_global() {
-                roots.push(current_name);
-            }
-
-            if let Some(parents) = parents {
-                for parent in parents {
-                    stack.push((parent, idx + 1));
-                }
-            }
-        }
-
-        roots
-    }
-
-    fn print_parents(&self, name: &str) {
-        let mut stack = vec![(name.to_string(), 0)];
-        let mut seen = HashSet::new();
-
-        while let Some((current_name, idx)) = stack.pop() {
-            if !seen.insert(current_name.clone()) {
-                continue;
-            }
-            if idx > 30 {
-                continue;
-            }
-
-            for _ in 0..idx {
-                print!(" ");
-            }
-
-            let entry = self.sym_tab.get(current_name.as_str()).unwrap();
-            let parents = self.parents.get(current_name.as_str());
-            let has_any_parents = parents.map(|p| !p.is_empty()).unwrap_or(false);
-
-            println!(
-                " {} - {} {} {} {}",
-                current_name,
-                if entry.sym.is_global() {
-                    "global"
-                } else {
-                    "local"
-                },
-                entry.offset,
-                entry.section,
-                if !has_any_parents { "❌" } else { "" }
-            );
-
-            if let Some(parents) = parents {
-                for parent in parents {
-                    stack.push((parent.to_string(), idx + 1));
-                }
-            }
-        }
-    }
-}
-
-// Ok("__text")
-// Ok("__const")
-// Ok("__const")
-// Ok("__gcc_except_tab")
-// Ok("__compact_unwind")
-// Ok("__eh_frame")
-//
-/// I think symbols show up in data sections and need to be identified
-#[test]
-fn hmm_imports() {
-    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-old/harness-df4868ea1b5cadad.3c2tm4jj9yl4umdxtid0wfenb.rcgu.o";
-    let f = PathBuf::from(f);
-
-    let data = fs::read(&f).unwrap();
-
-    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
-        panic!()
-    };
-
-    let graph = ModuleWithRelocations::new(&new);
-
-    for sec in new.sections() {
-        println!("{:?}", sec.name());
-    }
-
-    //    Options for introspecting the linker
-    //  -why_load
-    //          Log why each object file in a static library is loaded. That is, what symbol was needed.  Also called -whyload for compatibility.
-
-    //  -why_live symbol_name
-    //          Logs a chain of references to symbol_name.  Only applicable with -dead_strip .  It can help debug why something that you think should be dead strip removed is not removed.  See
-    //          -exported_symbols_list for syntax and use of wildcards.
-
-    //  -print_statistics
-    //          Logs information about the amount of memory and time the linker used.
-
-    //  -t      Logs each file (object, archive, or dylib) the linker loads.  Useful for debugging problems with search paths where the wrong library is loaded.
-
-    //  -order_file_statistics
-    //          Logs information about the processing of a -order_file.
-
-    //  -map map_file_path
-    //          Writes a map file to the specified path which details all symbols and their addresses in the output image.
-
-    // let lsym = old.file.symbol_by_name("ltmp7").unwrap();
-    // println!(
-    //     "{:?} {:?} {:?} {:?} {:?}",
-    //     lsym.address(),
-    //     lsym.name(),
-    //     lsym.kind(),
-    //     lsym.section(),
-    //     old.file
-    //         .section_by_index(lsym.section_index().unwrap())
-    //         .unwrap()
-    //         .name()
-    // );
-
-    // for export in old.file.exports().unwrap() {
-    //     println!("{:?} {:?}", export.address(), export.name().to_utf8());
-    // }
-
-    // for sym in old.file.symbols() {
-    //     if sym.index() == lsym.index() {
-    //         println!("{:?} {:?}", sym.address(), sym.name());
-    //     }
-
-    //     // if sym.address() == lsym.address() {
-    //     // println!("{:?} {:?}", sym.address(), sym.name());
-    //     // }
-    //     // println!("{:?} {:?}", sym.address(), sym.name());
-    // }
-
-    // println!("{:#?}", graph.deps);
-    // println!("{:#?}", graph.parents["__ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h8c5c4774279549f9E"]);
-    // println!("{:#?}", graph.deps["ltmp6"]);
-    // println!("{:#?}", graph.parents["ltmp6"]);
-}
-
-#[test]
-fn where_are_you_used() {
-    let f= "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-df4868ea1b5cadad.egexdem49eejgynie32zwugcu.rcgu.o";
-    let f = PathBuf::from(f);
-    let data = fs::read(&f).unwrap();
-    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
-        panic!()
-    };
-    let mut old = Computed::new(&new);
-    let graph = ModuleWithRelocations::new(&new);
-    let imports = new.imports().unwrap();
-    let im = imports
-        .iter()
-        .find(|e| {
-            e.name().to_utf8()
-                == "__ZN7harness13zoom_controls28_$u7b$$u7b$closure$u7d$$u7d$17h7a3c177fab0c21c7E"
-        })
-        .unwrap();
-
-    for (dep, children) in graph.deps.iter() {
-        if children.contains(im.name().to_utf8()) {
-            println!("{dep:?}");
-        }
-    }
-
-    // for import in new.imports().unwrap() {
-    //     println!("{:?}", import.name().to_utf8());
-    // }
-}
-
-#[test]
-fn build_internal_call_graph() {
-    let f = "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-ce721ccd4e3f382d.9wlujqu2r4bjdin21bprnpfdb.rcgu.o";
-    let f = PathBuf::from(f);
-    let data = fs::read(&f).unwrap();
-    let File::MachO64(new) = object::read::File::parse(&data as &[u8]).unwrap() else {
-        panic!()
-    };
-    let graph = ModuleWithRelocations::new(&new);
 }
