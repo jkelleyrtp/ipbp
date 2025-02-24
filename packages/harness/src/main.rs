@@ -1,9 +1,16 @@
 use std::any::TypeId;
 
 use binary_patch::*;
-use dioxus::prelude::*;
+use dioxus::prelude::{svg_attributes::format, *};
 
 fn main() {
+    let ptr = main as *const u8;
+    std::fs::write(
+        "/Users/jonkelley/Development/Tinkering/ipbp/harnessaddr.txt",
+        format!("{}", ptr as u64),
+    )
+    .unwrap();
+
     dioxus::launch(app);
 }
 
@@ -16,6 +23,8 @@ fn app() -> Element {
 
 fn zoom_controls() -> Element {
     let mut count = use_signal(|| 0);
+
+    let b = 9999;
 
     rsx! {
         div {
@@ -30,11 +39,17 @@ fn zoom_controls() -> Element {
             }
             button {
                 onclick: move |_| {
-                    count.set(count() + 5);
+                    count.set(count() + 1);
+                },
+                "Click me?"
+            }
+            button {
+                onclick: move |_| {
+                    count.set(count() + 6);
                 },
                 "Click me again?!!!"
             }
-            div { "You wow that's insane it works {count() * 2} times" }
+            div { "You wow that's insane it works {count() * 6} times" }
             button {
                 onclick: move |_| {
                     window().webview.zoom(1.5).unwrap();
@@ -95,7 +110,7 @@ fn GlobalInner() -> Element {
         h3 { "NewStruct: {s.abc}" }
         button {
             onclick: move |_| {
-                *MyGlobal.write() += 1;
+                *MyGlobal.write() += 5;
             },
             "Increment global"
         }

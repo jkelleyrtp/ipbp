@@ -1,0 +1,1 @@
+ld: warning: no platform load command found in '/Users/jonkelley/Development/Tinkering/ipbp/stub.o', assuming: macOS

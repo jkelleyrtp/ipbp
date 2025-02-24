@@ -186,13 +186,19 @@ async fn link(action: String) -> anyhow::Result<()> {
         // This is a hot-reload. Don't rebuild with any .rlib files.
         // Eventually, perform a smarter analysis
         "reload" => {
-            // let hotreload_dir = workspace_root().join("target").join("cargo-hotreload");
-            // std::fs::create_dir_all(&hotreload_dir).unwrap();
             let index_of_out = args.iter().position(|arg| arg == "-o").unwrap();
             let out_file = args[index_of_out + 1].clone();
             let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
 
-            cache_incrementals(object_files.as_ref());
+            // cache_incrementals(object_files.as_ref());
+            // let main_ptr = std::fs::read_to_string(workspace_root().join("harnessaddr.txt"))
+            //     .unwrap()
+            //     .parse()
+            //     .unwrap();
+
+            // diff::attempt_partial_link(main_ptr, out_file.into()).await;
+
+            // diff::attempt_partial_link(alsr_offset).await;
 
             // -O0 ? supposedly faster
             // -reproducible - even better?

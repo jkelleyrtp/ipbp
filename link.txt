@@ -1,5 +1,5 @@
 /Users/jonkelley/Development/Tinkering/ipbp/target/debug/cargo-hotreload
-/var/folders/zs/gvrfkj8x33d39cvw2p06yc700000gn/T/rustcpV1IyV/symbols.o
+/var/folders/zs/gvrfkj8x33d39cvw2p06yc700000gn/T/rustcXD7bWK/symbols.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.0855we6cyg5cdclibkaxe8dk6.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.090cf01jmdcqz2onphc3d11wa.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.0i5i2r7ttqg6cigzx02v2xojp.rcgu.o
@@ -21,6 +21,7 @@
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.20azn5nkhylyedwxia61f6g1x.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.217zgj0ym1b8f01ntoe24idys.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.26qur21j4v1crb18tbkikmsu3.rcgu.o
+/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.28u2wjq131pim169tt9hkhz4k.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.2bfgqs1ekr3hw3n5wjhsqs8pc.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.2c28mngyn1l3s2jk6lghr7lf5.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.2cnpde10iak840je44aoe0bvj.rcgu.o
@@ -103,6 +104,7 @@
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.9k11gg0hatysxd2uk7ey83lsc.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.9nq4skaz5j2mo3djlowxdh95l.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.9wlujqu2r4bjdin21bprnpfdb.rcgu.o
+/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.9zl4z8795i41h8w28p4fi9rks.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.a6g53fwhq9latrt9e9ko9ruja.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.afqzavhjxoosyft0flsvizcnx.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.aiej9wqx6lh8fu2xqm9xdm5f2.rcgu.o
@@ -125,6 +127,7 @@
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.d17zrr2dab2umb1ipvmd722vw.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.d32b2casmebefjq0gvdtcznq4.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.d5bx1gebb7vkf4kzm4ne66b25.rcgu.o
+/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.d7z1ygbgvxbfhz0bx59o6836y.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.dlj3hwecg2a81nsk6i7pqdpoq.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.dng5g0tz7dcn2lnsyawzflsyw.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-ce721ccd4e3f382d.dwzht4j6t172vtgwjthkl9prj.rcgu.o

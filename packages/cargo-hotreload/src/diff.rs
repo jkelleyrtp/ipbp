@@ -35,10 +35,15 @@ async fn works() {
 
 #[tokio::test]
 async fn _attempt_partial_link() {
-    attempt_partial_link().await;
+    let addr: u64 = std::fs::read_to_string(workspace_dir().join("harnessaddr.txt"))
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    attempt_partial_link(addr, workspace_dir().join("partial.o")).await;
 }
 
-async fn attempt_partial_link() {
+pub async fn attempt_partial_link(proc_main_addr: u64, out_path: PathBuf) {
     let mut d = ObjectDiff::new().unwrap();
     d.load().unwrap();
 
@@ -53,29 +58,42 @@ async fn attempt_partial_link() {
 
     let mut satisfied_exports = HashSet::new();
 
-    let mut files = d.modified_files.iter().collect::<Vec<_>>();
-    files.sort_by(|a, b| a.0.cmp(&b.0));
+    let modified_symbols = d
+        .modified_symbols
+        .iter()
+        .map(|f| f.as_str())
+        .collect::<HashSet<_>>();
+
+    for m in modified_symbols.iter() {
+        let newprs = d.parents.get(*m);
+        println!("parent of {m}: {:?}", newprs);
+        if let Some(parents) = newprs {
+            for p in newprs.unwrap() {
+                let ps = d.parents.get(p);
+                println!("parent of {p}: {:?}", ps);
+            }
+        }
+    }
+    // for m in modified_symbols.iter() {
+    //     let p = d.parents.get(*m);
+    //     println!("parent of {m}: {:?}", p);
+    // }
+
+    let mut modified = d.modified_files.iter().collect::<Vec<_>>();
+    modified.sort_by(|a, b| a.0.cmp(&b.0));
 
     // Figure out which symbols are required from *existing* code
     // We're going to create a stub `.o` file that satisfies these by jumping into the original code via a dynamic lookup / and or literally just manually doing it
-    for fil in files.iter() {
+    for fil in modified.iter() {
         let f = d
             .new
             .get(fil.0.file_name().unwrap().to_str().unwrap())
             .unwrap();
 
-        // println!(
-        //     "------ imports for {:?} ------",
-        //     f.path.file_name().unwrap(),
-        // );
         let i = f.macho.imports().unwrap();
         for i in i {
             if all_exports.contains(i.name().to_utf8()) {
                 adrp_imports.insert(i.name().to_utf8());
-                // adrp_imports.insert(strip_mangled(i.name().to_utf8()));
-                println!("-> {:?}", i.name().to_utf8());
-            } else {
-                println!("-? {:?}", i.name().to_utf8());
             }
         }
 
@@ -84,77 +102,64 @@ async fn attempt_partial_link() {
         }
     }
 
+    // Remove any imports that are indeed satisifed
     for s in satisfied_exports.iter() {
         adrp_imports.remove(s);
     }
 
-    let olist = files.iter().map(|(f, s)| f).collect::<Vec<_>>();
+    let addressed = {
+        let f = "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/harness";
 
-    // println!("directly changed files: {:#?}", olist);
+        let f = PathBuf::from(f);
+        let data = fs::read(&f).unwrap();
 
-    for (s, f) in d.old.iter() {
-        let i = f.macho.exports().unwrap();
-        if i.iter().any(|i| i.name().to_utf8() == "_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11") {
-            println!("found: {s:?} in OLD exports");
+        let mut out_addressed = HashMap::new();
+        let File::MachO64(old_) = object::read::File::parse(&data as &[u8]).unwrap() else {
+            panic!()
+        };
+
+        let man_stm = old_.symbol_by_name_bytes(b"_main").unwrap();
+        let aslr_offset = proc_main_addr - man_stm.address();
+
+        for sym in old_.symbols() {
+            let Ok(name) = sym.name() else {
+                continue;
+            };
+
+            if let Some(o) = adrp_imports.take(name) {
+                out_addressed.insert(o, sym.address() + aslr_offset);
+            }
         }
-    }
 
-    for (s, f) in d.new.iter() {
-        let i = f.macho.exports().unwrap();
-        // if i.iter().any(|i| {
-        //     i.name().to_utf8()
-        //         == "harness::AddingLogger::_$u7b$$u7b$closure$u7d$$u7d$::h07dfeccdbd10142a"
-        // }) {
-        if i.iter()
-            .any(|i| i.name().to_utf8().contains("3fmt17h455abb35572b9c11E"))
-        {
-            // if i.iter().any(|i| i.name().to_utf8() == "_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11") {
-            println!("found: {s:?} in exports");
-        }
-        // if i.iter().any(|i| i.name().to_utf8() == "__ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17h4e710f94be547818E") {
-        //     println!("found: {s:?} in exports");
-        // }
-    }
+        out_addressed
+    };
 
-    println!("adrp imports: {:#?}", adrp_imports);
-
-    // we are writing this:
-    // __ZN93_$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$3fmt17h455abb35572b9c11E
-    //
-    // but we should be writing this:
-    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11
-
-    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$3fmt17h455abb35572b9c11
-    // _$LT$generational_box..references..GenerationalRef$LT$R$GT$$u20$as$u20$core..fmt..Display$GT$::fmt::h455abb35572b9c11
-
-    let addressed = adrp_imports
-        .iter()
-        .enumerate()
-        .map(|(idx, k)| (*k, idx as u64 + 40000000))
-        .collect::<HashMap<_, _>>();
+    // println!("adrp imports addressed: {:#?}", addressed);
+    // println!("adrp imports latent: {:#?}", adrp_imports);
 
     let stub = build_stub(addressed).unwrap();
     let stub_file = workspace_dir().join("stub.o");
     std::fs::write(&stub_file, stub).unwrap();
 
+    // .arg("-r")
+    // .arg("-Wl,-unexported_symbol,_main")
     let o = Command::new("cc")
-        .args(olist)
+        .args(modified.iter().map(|(f, _)| f))
         .arg(stub_file)
-        // .arg("-r")
         .arg("-dylib")
         .arg("-Wl,-undefined,dynamic_lookup")
-        // .arg("-Wl,-unexported_symbol,_main")
         .arg("-arch")
         .arg("arm64")
-        // .arg("-dead_strip")
+        .arg("-dead_strip")
         .arg("-o")
-        .arg(workspace_dir().join("partial.o"))
+        .arg(out_path)
         .output()
         .await
         .unwrap();
 
     let err = String::from_utf8_lossy(&o.stderr);
     println!("err: {err}");
+    std::fs::write(workspace_dir().join("link_errs_partial.txt"), &*err).unwrap();
 }
 
 pub async fn main() -> anyhow::Result<()> {
@@ -206,14 +211,21 @@ impl ObjectDiff {
             }
         }
 
-        for (parent, children) in self.deps.iter() {
-            for child in children {
-                self.parents
-                    .entry(child.to_string())
-                    .or_default()
-                    .insert(parent.to_string());
-            }
-        }
+        // for (child, parents) in self.parents.iter() {
+        //     self.parents
+        //         .entry(child.to_string())
+        //         .or_default()
+        //         .extend(parents.iter().cloned());
+        // }
+
+        // for (parent, children) in self.deps.iter() {
+        //     for child in children {
+        //         self.parents
+        //             .entry(child.to_string())
+        //             .or_default()
+        //             .insert(parent.to_string());
+        //     }
+        // }
 
         // let s = self.modified_symbols.iter().sorted().collect::<Vec<_>>();
         // println!("sorted: {:#?}", s);
@@ -290,22 +302,69 @@ impl ObjectDiff {
             return Ok(());
         };
 
+        let mut changed = HashSet::new();
         for section in new.macho.sections() {
             let n = section.name().unwrap();
             if n == "__text" || n == "__const" || n.starts_with("__literal") {
-                let changed = self.acc_changed(&old.macho, &new.macho, section.index());
-                for n in &changed {
-                    let parents = new.acc_public_parents(n);
-
-                    self.modified_symbols
-                        .extend(parents.iter().map(|p| p.to_string()));
-
-                    self.modified_files
-                        .entry(new.path.clone())
-                        .or_default()
-                        .extend(parents.iter().map(|p| p.to_string()));
-                }
+                let _changed = self.acc_changed(&old.macho, &new.macho, section.index());
+                changed.extend(_changed);
             }
+        }
+
+        for sym in new.macho.symbols() {}
+
+        // let existing = self
+        //     .modified_symbols
+        //     .iter()
+        //     .map(|f| f.to_string())
+        //     .collect::<HashSet<_>>();
+
+        // for n in changed
+        //     .iter()
+        //     .copied()
+        //     .chain(existing.iter().map(|f| f.as_str()))
+        // {
+        //     let parents = new.acc_public_parents(n);
+
+        //     self.modified_symbols
+        //         .extend(parents.iter().map(|p| p.to_string()));
+
+        //     self.modified_files
+        //         .entry(new.path.clone())
+        //         .or_default()
+        //         .extend(parents.iter().map(|p| p.to_string()));
+
+        //     for p in parents.iter() {
+        //         self.deps
+        //             .entry(p.to_string())
+        //             .or_default()
+        //             .insert(n.to_string());
+        //     }
+
+        //     self.parents
+        //         .entry(n.to_string())
+        //         .or_default()
+        //         .extend(parents.iter().map(|p| p.to_string()));
+        // }
+
+        for import in new.macho.imports().unwrap() {
+            let n = import.name().to_utf8();
+
+            // this won't acc anything since the symbols haven't been discovered
+            let parents = new.acc_public_parents(n);
+            println!("import: {n:?} -> {parents:?}");
+
+            for p in parents.iter() {
+                self.deps
+                    .entry(p.to_string())
+                    .or_default()
+                    .insert(n.to_string());
+            }
+
+            self.parents
+                .entry(n.to_string())
+                .or_default()
+                .extend(parents.iter().map(|p| p.to_string()));
         }
 
         Ok(())
@@ -430,14 +489,13 @@ impl LoadedFile {
             }
         }
 
-        let text_section = self.macho.section_by_name_bytes(b"__text").unwrap();
-        let text_index = text_section.index();
-        let text_syms_by_addres = self
+        // .filter(|s| s.section_index() == Some(text_index))
+        // .filter(|s| s.section_index() == Some(text_index))
+        // .filter(|s| s)
+
+        let local_defs = self
             .macho
             .symbols()
-            // .filter(|s| s.section_index() == Some(text_index))
-            // .filter(|s| s.section_index() == Some(text_index))
-            // .filter(|s| s)
             .filter(|s| s.is_definition())
             .map(|s| (s.address(), s.name().unwrap()))
             .collect::<BTreeMap<_, _>>();
@@ -456,18 +514,11 @@ impl LoadedFile {
             let sym_section = self.macho.section_by_index(sym.section).unwrap();
             let sym_data = sym_section.data().unwrap();
 
-            for (_addr, reloc) in sym.relocations.iter() {
+            for (addr, reloc) in sym.relocations.iter() {
                 let target = match symbol_name_of_relo(self.macho, reloc.target()) {
                     Some(name) => name,
                     None => {
-                        let RelocationTarget::Section(section_index) = reloc.target() else {
-                            panic!("no target for {sym_name}");
-                        };
-
-                        let offset = *_addr as usize;
-                        // println!("reloc: {reloc:?}");
-
-                        let value_bytes = &sym_data[offset as usize..(offset + 8) as usize];
+                        let value_bytes = &sym_data[*addr as usize..(*addr + 8) as usize];
                         let addend = u64::from_le_bytes([
                             value_bytes[0],
                             value_bytes[1],
@@ -478,37 +529,7 @@ impl LoadedFile {
                             value_bytes[6],
                             value_bytes[7],
                         ]);
-
-                        // let target_section = new.file.section_by_index(section_index).unwrap();
-
-                        // let data = sym.data;
-                        // let data = section.data().unwrap();
-                        // println!(
-                        //     "target section {} at address {} for relo addr {}",
-                        //     section.name().unwrap(),
-                        //     section.address(),
-                        //     *_addr
-                        // );
-                        // if *_addr as usize <= section.address() as usize {
-                        //     println!(
-                        //         "Bad reloc: {sym_name} -> {}, {_addr} is before {}\n{:?}",
-                        //         section.name().unwrap(),
-                        //         section.address(),
-                        //         reloc
-                        //     );
-                        // }
-
-                        // let offset = *_addr as usize;
-                        // let offset = *_addr as usize - section.address() as usize;
-
-                        // println!("value: {:?}", addend);
-                        // println!("value corrected: {:?}", addend - target_section.address());
-                        // let value = addend - target_section.address();
-
-                        // let o = ;
-                        // // println!("{} -> {:?}", sym_name, o);
-                        // o
-                        text_syms_by_addres.get(&addend).unwrap()
+                        local_defs.get(&addend).unwrap()
                     }
                 };
 
@@ -522,9 +543,15 @@ impl LoadedFile {
                 self.parents.entry(child).or_default().insert(parent);
             }
         }
+
+        for import in self.macho.imports().unwrap() {
+            if self.parents.contains_key(&import.name().to_utf8()) {
+                // println!("dep import: {import:?}");
+            }
+        }
     }
 
-    fn acc_public_parents(&self, name: &'static str) -> Vec<&'static str> {
+    fn acc_public_parents<'a>(&self, name: &'a str) -> Vec<&'a str> {
         let mut roots = vec![];
 
         let mut stack = vec![(name, 0)];
@@ -535,7 +562,9 @@ impl LoadedFile {
                 continue;
             }
 
-            let entry = self.sym_tab.get(current_name).unwrap();
+            let Some(entry) = self.sym_tab.get(current_name) else {
+                continue;
+            };
             let parents = self.parents.get(current_name);
 
             if !current_name.starts_with("l") {
@@ -544,11 +573,12 @@ impl LoadedFile {
 
             // if entry.sym.name().un
 
-            // if entry.sym.is_global() {
-            //     roots.push(current_name);
-            // } else {
-            //     println!("local: {current_name}");
-            // }
+            if entry.sym.is_global() {
+                // roots.push(current_name);
+                println!("global: {current_name}");
+            } else {
+                println!("local: {current_name}");
+            }
 
             if let Some(parents) = parents {
                 for parent in parents {
