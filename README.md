@@ -3,31 +3,11 @@
 ![it works](hotreload_works.gif)
 
 Patch rust functions at runtime with magic and linker hacks.
-
+<!--
 More limited than Live++, but similar results, kinda like Live++ "lite".
 
 Doesn't handle all the edge cases. Doesn't care about shared libraries. Might not  work for your usecase.
 
-Targets supported (in order of importance):
-- [x] macos
-- [ ] wasm
-- [ ] linux
-- [ ] ios
-- [ ] android
-- [ ] windows
-
-## what's missing
-- [ ] patching of functions not named "some_func_1" 🤣 (hardcoded some things....)
-- [ ] intra compilation-unit static/thread local patching (works across crate boundaries, not within crates)
-- [ ] generic tooling for any project
-- [ ] performance improvements
-- [ ] proper object diffing not reliant on symbols
-- [ ] reflection system for struct changes
-- [ ] unknown impact on vtable and trait objects
-- [ ] unloading of swapped changes
-- [ ] a proper GOT implementation rather than a psuedo GOT
-- [ ] patching of non-nomangle functions
-- [ ] bug squashing (something wrong with rlibs if you ctrl-c during a hotbuild)
 
 Currently I've only really tested cross-crate thread locals and statics since that's normally what doesn't work with dylib loader systems. It works with this crate. Tokio and Dioxus use lots of threadlocals - components, tasks, TLS-based runtimes will all work with this.
 
@@ -41,11 +21,9 @@ There's some performance being left on the table here. A reload takes about 2 se
 
 Hotreloading code itself is only half the battle. The other half is knowing the effects of the change such that the runtime is aware of the changes for unwinding. A better solution overall would be some sort of smart system that can tell the runtime the type of change that happened. Ideally this is generic for any rust project.
 
-Anyways! More tests and more platforms to come.
+Anyways! More tests and more platforms to come. -->
 
 ## how it works
-
-
 
 roughly:
 - diff object files
@@ -55,7 +33,7 @@ roughly:
 - package the .o files together into a single cursed dylib that tricks dlopen
 - disable a bunch of stuff like ASLR
 - dlopen that dylib at the *same address as the program root itself* such that our pic/pie code can work properly
-- resovle missing symbols against the *running binary*
+- resolve missing symbols against the *running binary*
 - tell the app that we've patched it and it should maybe try to do new stuff
 
 and voila you have in-place binary patching for a running rust app.
@@ -63,54 +41,6 @@ and voila you have in-place binary patching for a running rust app.
 Not only does completely circumvent the typical close, rebuild, relink, restart, reinitialize, resume flow, but it uses rust's *incremental compiler* *WITHOUT LINKING* - the only unnecessary cost we pay here is the compiler frontend + macro expansion. This is faster than pretty much anything else you could design.**
 
 ** currently uses the linker in a sort of pass-thru mode. we still need to handle compilation-level relocations. eventually will drop this entirely.
-
-## Current status:
-
-We can diff object files and figure out which symbols have changed between revs. This lets us narrow down our patch creation to just the symbols in a few object files.
-
-Todo:
-- merge across more codegen units (.o)
-- Respect the graph for larger projects (need to parse some random .bin files...)
-- Assemble dylib with necessary hacks (missing relocations, etc)
-- Dlopen said dylib with zero/limited-exports
-- Initial approach will not include debug symbosl for the debugger - this seems much harder than just arbitrarily loading code in
-
-
-Supposedly rust employs less "magic" making our primary hiccups:
-- statics (actually static statics...)
-- tls
-- vtable
-
-Doing this on mac seems relatively straightforward. Relocations are easy and all symbols are around, thanks to Rust.
-Wasm should also be easy in theory, and then Linux too.
-Windows scares me.
-Android/ios require a networked variant of this which, again, should work in theory.
-
-## Macho
-
-- don't use --emit=obj - link it ourself
-- become the linker with -Clinker=blah
-- look for missing GOT relocations and stitch those together for incremental compiles
-- find missing relocations and then fill them in with an extra stub file?
-
-why do we care about only linking the new stuff? faster? fewer collisions? symbol overwriting?
-
-it's moooooostly because it seems more "pure" to only feed in changed symbols.
-- memory consumption
-- some perf stuff
-- intra-project threadlocals/static muts
-
-
-## Questions?
-
-- how to handle async? will need runtime integration
-- fast enough to not need literal plumbing?
-
-## Tricks
-
-- use base_address to combat aslr for an already running program
-- we dont want to compile to original program *without* alsr
-
 
 ## Notes
 - dlopen seems to be working on ios?

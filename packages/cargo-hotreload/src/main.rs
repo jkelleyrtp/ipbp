@@ -95,13 +95,6 @@ async fn hotreload_loop() -> anyhow::Result<()> {
 
         println!("Fast reloading... ");
 
-        let fast_build = Command::new(direct_rustc[0].clone())
-            .args(direct_rustc[1..].iter())
-            .env("HOTRELOAD_LINK", "reload")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-
         // going through rustc directly
         // .arg("rustc")
         // .arg("--package")
@@ -116,6 +109,13 @@ async fn hotreload_loop() -> anyhow::Result<()> {
         // .arg("--")
         // .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
         // .arg(format!("-Cdebuginfo=0"))
+
+        let fast_build = Command::new(direct_rustc[0].clone())
+            .args(direct_rustc[1..].iter())
+            .env("HOTRELOAD_LINK", "reload")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
 
         let started = Instant::now();
         let output = run_cargo_output(fast_build, false).await;
