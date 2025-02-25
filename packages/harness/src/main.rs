@@ -1,7 +1,6 @@
-use std::any::TypeId;
-
 use binary_patch::*;
-use dioxus::prelude::{svg_attributes::format, *};
+use dioxus::prelude::*;
+use std::any::TypeId;
 
 fn main() {
     let ptr = main as *const u8;
@@ -23,8 +22,6 @@ fn app() -> Element {
 
 fn zoom_controls() -> Element {
     let mut count = use_signal(|| 0);
-
-    let b = 9999;
 
     rsx! {
         div {
@@ -50,31 +47,12 @@ fn zoom_controls() -> Element {
                 "Click me again?!!!"
             }
             div { "You wow that's insane it works {count() * 6} times" }
-            button {
-                onclick: move |_| {
-                    window().webview.zoom(1.5).unwrap();
-                },
-                "Zoom in"
-            }
-            button {
-                onclick: move |_| {
-                    window().webview.zoom(1.0).unwrap();
-                },
-                "Reset zoom"
+            for i in 0..count() {
+                div { "You wow that's insane it works {i} {i} {i * 2} times" }
             }
             Child { a: 123, b: "hello!?" }
             Child2 {}
-            Child2 {}
             NewKid {}
-            for i in 0..count() {
-                div { "You wow that's insane it works {i} {i} {i * 2} times" }
-                button {
-                    onclick: move |_| {
-                        window().webview.zoom(2.0).unwrap();
-                    },
-                    "Zoom in!!!"
-                }
-            }
         }
     }
 }
@@ -87,15 +65,18 @@ fn NewKid() -> Element {
     }
 }
 
-static MyGlobal: GlobalSignal<i32> = GlobalSignal::new(|| 0);
+static MyGlobal: GlobalSignal<i64> = GlobalSignal::new(|| 2);
+static MyGlobal2: GlobalSignal<i32> = GlobalSignal::new(|| 2);
+static MyGlobal3: GlobalSignal<i32> = GlobalSignal::new(|| 2);
 
 struct NewStruct {
     abc: i32,
+    def: i32,
 }
 
 impl NewStruct {
     fn new() -> Self {
-        Self { abc: 0 }
+        Self { abc: 12, def: 0 }
     }
 }
 
@@ -107,10 +88,14 @@ fn GlobalInner() -> Element {
 
     rsx! {
         h1 { "GlobalSignal: {MyGlobal}" }
+        h1 { "GlobalSignal: {MyGlobal2}" }
+        h1 { "GlobalSignal: {MyGlobal3}" }
         h3 { "NewStruct: {s.abc}" }
+        h3 { "NewStruct pt2: {s.def}" }
+        h3 { "NewStruct pt2: {s.def}" }
         button {
             onclick: move |_| {
-                *MyGlobal.write() += 5;
+                *MyGlobal.write() += 1;
             },
             "Increment global"
         }
@@ -141,16 +126,25 @@ fn Child(a: i32, b: String) -> Element {
             },
             "Decrement count"
         }
+        div { "---------------------------------" }
+        Child3 {}
+        div { "---------------------------------" }
         GlobalInner {}
+        div { "---------------------------------" }
         AddingLogger {}
+    }
+}
+
+#[component]
+fn Child3() -> Element {
+    rsx! {
+        div { "Child 3" }
     }
 }
 
 #[component]
 fn Child2() -> Element {
     rsx! {
-        div { "Child 4" }
-        div { "Child 4" }
         div { "Child 4" }
     }
 }

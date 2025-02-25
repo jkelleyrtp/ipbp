@@ -14,15 +14,6 @@ use tokio::{
 
 mod diff;
 
-#[derive(Debug, Parser)]
-enum Args {
-    #[clap(name = "hotreload")]
-    Hotreload,
-
-    #[clap(name = "diff")]
-    Diff,
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Go through the linker if we need to
@@ -30,11 +21,7 @@ async fn main() -> anyhow::Result<()> {
         return link(action).await;
     }
 
-    // Otherwise the commands
-    match Args::parse() {
-        Args::Hotreload => hotreload_loop().await,
-        Args::Diff => diff::main().await,
-    }
+    hotreload_loop().await
 }
 
 async fn hotreload_loop() -> anyhow::Result<()> {
@@ -191,14 +178,16 @@ async fn link(action: String) -> anyhow::Result<()> {
             let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
 
             cache_incrementals(object_files.as_ref());
-            // let main_ptr = std::fs::read_to_string(workspace_root().join("harnessaddr.txt"))
-            //     .unwrap()
-            //     .parse()
-            //     .unwrap();
 
-            // diff::attempt_partial_link(main_ptr, out_file.into()).await;
+            let patch_target =
+                "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/harness".into();
 
-            // diff::attempt_partial_link(alsr_offset).await;
+            let main_ptr = std::fs::read_to_string(workspace_root().join("harnessaddr.txt"))
+                .unwrap()
+                .parse()
+                .unwrap();
+
+            diff::attempt_partial_link(main_ptr, patch_target, out_file.clone().into()).await;
 
             // -O0 ? supposedly faster
             // -reproducible - even better?
@@ -331,6 +320,12 @@ async fn run_cargo_output(
                         direct_rustc.extend(shell_words::split(args).unwrap());
                     }
 
+                    #[derive(Debug, Deserialize)]
+                    struct RustcArtifact {
+                        artifact: PathBuf,
+                        emit: String,
+                    }
+
                     if let Ok(artifact) = serde_json::from_str::<RustcArtifact>(&word) {
                         if artifact.emit == "link" {
                             output_location =
@@ -354,10 +349,4 @@ async fn run_cargo_output(
         output_location,
         direct_rustc,
     })
-}
-
-#[derive(Debug, Deserialize)]
-struct RustcArtifact {
-    artifact: PathBuf,
-    emit: String,
 }

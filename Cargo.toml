@@ -7,7 +7,7 @@ members = [
     "packages/harness",
     "packages/cargo-hotreload",
     "packages/hotreload-macro",
-    "packages/binary-patch",
+    "packages/binary-patch", "packages/fixes-wip",
 ]
 resolver = "2"
 
@@ -23,9 +23,9 @@ proc-macro2 = "1.0"
 dioxus = { path = "../../dioxus/packages/dioxus" }
 object = { version = "0.36.0", features = ["all"] }
 
-# [profile.dev]
-# debug = 0
-# strip = "debuginfo"
+[profile.dev]
+debug = 0
+strip = "debuginfo"
 
 [profile.hotreload]
 inherits = "dev"
