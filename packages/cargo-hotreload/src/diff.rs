@@ -65,9 +65,13 @@ pub async fn attempt_partial_link(proc_main_addr: u64, out_path: PathBuf) {
         .collect::<HashSet<_>>();
 
     for m in modified_symbols.iter() {
-        if !m.starts_with("l") {
-            d.print_parent(m);
+        if m.starts_with("ltmp") {
+            continue;
         }
+
+        let path = d.find_path_to_main(m);
+        println!("m: {m}");
+        println!("path: {path:#?}\n");
     }
 
     let mut modified = d.modified_files.iter().collect::<Vec<_>>();
@@ -233,6 +237,52 @@ impl ObjectDiff {
         // self.print_call_graph("_main", 0);
 
         Ok(())
+    }
+
+    /// Walk the call graph to find the path to the main function
+    fn find_path_to_main(&self, name: &str) -> Vec<String> {
+        let mut path = Vec::new();
+        let mut visited = std::collections::HashSet::new();
+
+        // Helper function for DFS with backtracking
+        fn dfs(
+            current: &str,
+            path: &mut Vec<String>,
+            visited: &mut std::collections::HashSet<String>,
+            parents: &std::collections::HashMap<String, HashSet<String>>,
+        ) -> bool {
+            // If we've found main, we're done
+            if current.ends_with("_main") {
+                path.push(current.to_string());
+                return true;
+            }
+
+            // Mark current node as visited
+            visited.insert(current.to_string());
+            path.push(current.to_string());
+
+            // Check all parents of the current node
+            if let Some(parent_nodes) = parents.get(current) {
+                for parent in parent_nodes {
+                    if !visited.contains(parent) {
+                        if dfs(parent, path, visited, parents) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // If no path is found through this node, backtrack
+            path.pop();
+            false
+        }
+
+        // Start DFS from the given name
+        dfs(name, &mut path, &mut visited, &self.parents);
+
+        // // Reverse the path since we built it from target to main
+        // path.reverse();
+        path
     }
 
     fn print_parent(&self, name: &str) {
