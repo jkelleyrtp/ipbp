@@ -190,7 +190,7 @@ async fn link(action: String) -> anyhow::Result<()> {
             let out_file = args[index_of_out + 1].clone();
             let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
 
-            // cache_incrementals(object_files.as_ref());
+            cache_incrementals(object_files.as_ref());
             // let main_ptr = std::fs::read_to_string(workspace_root().join("harnessaddr.txt"))
             //     .unwrap()
             //     .parse()

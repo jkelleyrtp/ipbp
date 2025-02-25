@@ -65,19 +65,10 @@ pub async fn attempt_partial_link(proc_main_addr: u64, out_path: PathBuf) {
         .collect::<HashSet<_>>();
 
     for m in modified_symbols.iter() {
-        let newprs = d.parents.get(*m);
-        println!("parent of {m}: {:?}", newprs);
-        if let Some(parents) = newprs {
-            for p in newprs.unwrap() {
-                let ps = d.parents.get(p);
-                println!("parent of {p}: {:?}", ps);
-            }
+        if !m.starts_with("l") {
+            d.print_parent(m);
         }
     }
-    // for m in modified_symbols.iter() {
-    //     let p = d.parents.get(*m);
-    //     println!("parent of {m}: {:?}", p);
-    // }
 
     let mut modified = d.modified_files.iter().collect::<Vec<_>>();
     modified.sort_by(|a, b| a.0.cmp(&b.0));
@@ -203,9 +194,11 @@ impl ObjectDiff {
         let keys = self.new.keys().cloned().collect::<Vec<_>>();
         for (idx, f) in keys.iter().enumerate() {
             println!("----- {:?} {}/{} -----", f, idx, num_right);
+
             let changed_before = self.modified_symbols.len();
             self.load_file(f)?;
             let changed_after = self.modified_symbols.len();
+
             if changed_after > changed_before {
                 println!("❌ -> {}", changed_after - changed_before);
             }
@@ -243,26 +236,44 @@ impl ObjectDiff {
     }
 
     fn print_parent(&self, name: &str) {
-        let mut stack = vec![(name.to_string(), 0)];
+        println!("\n---- parents: {name} ----");
+
+        let mut stack = vec![];
+        for p in self.parents.get(name).unwrap() {
+            stack.push((p.to_string(), 0));
+        }
         let mut seen = HashSet::new();
 
         while let Some((current_name, idx)) = stack.pop() {
-            if !seen.insert(current_name.clone()) {
-                continue;
-            }
-            if idx > 30 {
+            // unnamed symbols are fine, but ltmp symbols are garbage
+            if current_name.starts_with("ltmp") {
                 continue;
             }
 
-            for _ in 0..idx {
-                print!(" ");
-            }
-            println!(" {}", current_name);
-
-            if let Some(parents) = self.parents.get(&current_name) {
-                for parent in parents {
-                    stack.push((parent.to_string(), idx + 1));
+            if seen.insert(current_name.clone()) {
+                for _ in 0..idx {
+                    print!(" ");
                 }
+
+                let prs = self.parents.get(&current_name);
+                let has_parents = prs.map(|p| !p.is_empty()).unwrap_or(false);
+
+                println!(
+                    " {idx} - {} {}",
+                    current_name,
+                    if has_parents { "" } else { "❌" }
+                );
+
+                if let Some(parents) = prs {
+                    for parent in parents {
+                        stack.push((parent.to_string(), idx + 1));
+                    }
+                }
+            } else {
+                // for _ in 0..idx {
+                //     print!(" ");
+                // }
+                // println!("❌ Loop detected -> {current_name}");
             }
         }
     }
@@ -305,66 +316,40 @@ impl ObjectDiff {
         let mut changed = HashSet::new();
         for section in new.macho.sections() {
             let n = section.name().unwrap();
-            if n == "__text" || n == "__const" || n.starts_with("__literal") {
+            if n == "__text" || n == "__const" || n.starts_with("__literal") || n == "__eh_frame" {
                 let _changed = self.acc_changed(&old.macho, &new.macho, section.index());
                 changed.extend(_changed);
             }
         }
 
-        for sym in new.macho.symbols() {}
-
-        // let existing = self
-        //     .modified_symbols
-        //     .iter()
-        //     .map(|f| f.to_string())
-        //     .collect::<HashSet<_>>();
-
-        // for n in changed
-        //     .iter()
-        //     .copied()
-        //     .chain(existing.iter().map(|f| f.as_str()))
-        // {
-        //     let parents = new.acc_public_parents(n);
-
-        //     self.modified_symbols
-        //         .extend(parents.iter().map(|p| p.to_string()));
-
-        //     self.modified_files
-        //         .entry(new.path.clone())
-        //         .or_default()
-        //         .extend(parents.iter().map(|p| p.to_string()));
-
-        //     for p in parents.iter() {
-        //         self.deps
-        //             .entry(p.to_string())
-        //             .or_default()
-        //             .insert(n.to_string());
-        //     }
-
-        //     self.parents
-        //         .entry(n.to_string())
-        //         .or_default()
-        //         .extend(parents.iter().map(|p| p.to_string()));
-        // }
-
-        for import in new.macho.imports().unwrap() {
-            let n = import.name().to_utf8();
-
-            // this won't acc anything since the symbols haven't been discovered
-            let parents = new.acc_public_parents(n);
-            println!("import: {n:?} -> {parents:?}");
-
-            for p in parents.iter() {
-                self.deps
-                    .entry(p.to_string())
-                    .or_default()
-                    .insert(n.to_string());
+        for c in changed.iter() {
+            if !c.starts_with("l") && !c.starts_with("ltmp") {
+                self.modified_symbols.insert(c.to_string());
+            } else {
+                let mod_name = format!("{c}_{name}");
+                self.modified_symbols.insert(mod_name);
             }
+        }
 
-            self.parents
-                .entry(n.to_string())
-                .or_default()
-                .extend(parents.iter().map(|p| p.to_string()));
+        for (child, parents) in new.parents.iter() {
+            let child_name = if child.starts_with("l") {
+                format!("{child}_{name}")
+            } else {
+                child.to_string()
+            };
+
+            for p in parents {
+                let p_name = if p.starts_with("l") {
+                    format!("{p}_{name}")
+                } else {
+                    p.to_string()
+                };
+
+                self.parents
+                    .entry(child_name.clone())
+                    .or_default()
+                    .insert(p_name);
+            }
         }
 
         Ok(())
@@ -476,37 +461,27 @@ impl LoadedFile {
             sym_tab: Default::default(),
         };
 
-        loaded_file.fill();
+        loaded_file.load();
 
         Ok(loaded_file)
     }
 
-    fn fill(&mut self) {
+    fn load(&mut self) {
         // Build the symbol table
         for sect in self.macho.sections() {
             for r in acc_symbols(&self.macho, sect.index()) {
-                self.sym_tab.insert(r.name, r);
+                let existed = self.sym_tab.insert(r.name, r);
+                assert!(existed.is_none());
             }
         }
 
-        // .filter(|s| s.section_index() == Some(text_index))
-        // .filter(|s| s.section_index() == Some(text_index))
-        // .filter(|s| s)
-
+        // Create a map of address -> symbol so we can resolve the section of a symbol
         let local_defs = self
             .macho
             .symbols()
             .filter(|s| s.is_definition())
             .map(|s| (s.address(), s.name().unwrap()))
             .collect::<BTreeMap<_, _>>();
-
-        // println!("text_syms_by_addres: {:#?}", text_syms_by_addres);
-
-        // println!(
-        //     "checking section {} at address {}",
-        //     text_section.name().unwrap(),
-        //     text_section.address()
-        // );
 
         // Build the call graph by walking the relocations
         for (sym_name, sym) in self.sym_tab.iter() {
@@ -533,6 +508,17 @@ impl LoadedFile {
                     }
                 };
 
+                if target == "__ZN100_$LT$dioxus_core..any_props..VProps$LT$F$C$P$C$M$GT$$u20$as$u20$dioxus_core..any_props..AnyProps$GT$9duplicate17h57c076f81807f7c3E" {
+                    println!("{} targetted in {:?}?", sym_name, self.path);
+                }
+                // if target.starts_with("l") {
+                //     println!("target: {target} from {sym_name}");
+                // }
+
+                // if target == *sym_name {
+                //     println!("Reference to self: {sym_name} - reloc: {reloc:?}");
+                // }
+
                 entry.insert(target);
             }
         }
@@ -543,41 +529,40 @@ impl LoadedFile {
                 self.parents.entry(child).or_default().insert(parent);
             }
         }
-
-        for import in self.macho.imports().unwrap() {
-            if self.parents.contains_key(&import.name().to_utf8()) {
-                // println!("dep import: {import:?}");
-            }
-        }
     }
 
-    fn acc_public_parents<'a>(&self, name: &'a str) -> Vec<&'a str> {
+    fn acc_public_parent_chain<'a>(&self, name: &'a str) -> Vec<&'a str> {
         let mut roots = vec![];
 
         let mut stack = vec![(name, 0)];
         let mut seen = HashSet::new();
 
         while let Some((current_name, idx)) = stack.pop() {
-            if !seen.insert(current_name.clone()) {
+            if !seen.insert(current_name) {
                 continue;
             }
 
-            let Some(entry) = self.sym_tab.get(current_name) else {
-                continue;
-            };
             let parents = self.parents.get(current_name);
 
-            if !current_name.starts_with("l") {
+            if !current_name.starts_with("l") && current_name != name {
                 roots.push(current_name);
             }
 
-            // if entry.sym.name().un
+            // let Some(entry) = self.sym_tab.get(current_name) else {
+            //     continue;
+            // };
 
-            if entry.sym.is_global() {
+            let is_global = self
+                .sym_tab
+                .get(current_name)
+                .map(|s| s.sym.is_global())
+                .unwrap_or(true);
+
+            if is_global {
                 // roots.push(current_name);
-                println!("global: {current_name}");
+                // println!("global: {current_name}");
             } else {
-                println!("local: {current_name}");
+                // println!("local: {current_name}");
             }
 
             if let Some(parents) = parents {
@@ -677,11 +662,6 @@ fn acc_symbols<'a>(new: FileRef<'a>, section_idx: SectionIndex) -> Vec<Relocated
 
     let data = section.data().unwrap();
 
-    // no data? no symbols
-    if data.is_empty() {
-        return vec![];
-    }
-
     // No symbols, no symbols,
     if sorted.is_empty() {
         return vec![];
@@ -720,8 +700,10 @@ fn acc_symbols<'a>(new: FileRef<'a>, section_idx: SectionIndex) -> Vec<Relocated
         }
 
         // Identify the instructions that apply to this symbol
-        let data_range = sym_offset as usize..func_end;
-        let data = &data[data_range.clone()];
+        let data = match reloc_start {
+            Some(_start) => &data[sym_offset as usize..func_end],
+            _ => &[],
+        };
 
         // Identify the relocations that apply to this symbol
         let relocations = match reloc_start {
@@ -738,7 +720,7 @@ fn acc_symbols<'a>(new: FileRef<'a>, section_idx: SectionIndex) -> Vec<Relocated
             section: section_idx,
         });
 
-        func_end = (sym_offset) as usize;
+        func_end = sym_offset as usize;
     }
 
     assert_eq!(reloc_idx, relocations.len());
@@ -803,10 +785,13 @@ fn compare_masked<'a>(
         // the slice is the end of the relocation to the start of the previous relocation
         let reloc_byte_size = (left_reloc.size() as usize) / 8;
         let start = *l_addr as usize - left.offset as usize + reloc_byte_size;
-        // println!(
-        //     "addr: {l_addr}, adju: {}, start: {start}, last: {last}",
-        //     *l_addr as usize - left.offset
-        // );
+
+        // Some relocations target the same location
+        // In these cases, we just continue since we just masked and checked them already
+        if (*l_addr as usize - left.offset as usize) == last {
+            continue;
+        }
+
         debug_assert!(start <= last);
         debug_assert!(start <= left.data.len());
 
@@ -840,7 +825,7 @@ fn symbol_name_of_relo<'a>(obj: &impl Object<'a>, target: RelocationTarget) -> O
         ),
         RelocationTarget::Section(_) => None,
         RelocationTarget::Absolute => {
-            println!("Absolute relocation target");
+            panic!("Absolute relocation target");
             None
         }
         _ => None,
@@ -996,4 +981,45 @@ fn does_have_exports() {
     for export in old_.exports().unwrap() {
         println!("{:?}", export.name().to_utf8());
     }
+}
+
+#[test]
+fn graph_makes_sense() {
+    // "__ZN100_$LT$dioxus_core..any_props..VProps$LT$F$C$P$C$M$GT$$u20$as$u20$dioxus_core..any_props..AnyProps$GT$9duplicate17h57c076f81807f7c3E"
+    let f=  "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-ce721ccd4e3f382d.bazp83619w16q5x62o34kz5zp.rcgu.o";
+    // let f=  "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-ce721ccd4e3f382d.bazp83619w16q5x62o34kz5zp.rcgu.o";
+    // let f=  "/Users/jonkelley/Development/Tinkering/ipbp/data/incremental-new/harness-ce721ccd4e3f382d.bazp83619w16q5x62o34kz5zp.rcgu.o";
+    let f = PathBuf::from(f);
+    let inpu = LoadedFile::new(f).unwrap();
+    let exports = inpu
+        .macho
+        .exports()
+        .unwrap()
+        .iter()
+        .map(|e| e.name().to_utf8())
+        .collect::<Vec<_>>();
+
+    for import in inpu.macho.imports().unwrap() {
+        let imp = import.name().to_utf8();
+
+        // this won't acc anything since the symbols haven't been discovered
+        let parents = inpu.acc_public_parent_chain(imp);
+        println!("imp: {imp:?}");
+        for p in parents.iter() {
+            println!(
+                " -> {p:?} {}",
+                if exports.contains(&p) { "✅" } else { "❌" }
+            );
+        }
+        if parents.is_empty() {
+            println!(" -> None ❌");
+        }
+
+        // println!("imp: {imp:?} - parents: {:#?}", parents);
+    }
+
+    // let dep = inpu.sym_tab.get("ltmp2").unwrap();
+    // let ps = inpu.parents.get("ltmp2").unwrap();
+    // println!("ltmp2: {:#?}", ps);
+    // // println!("ltmp2: {:#?}", dep.relocations);
 }
