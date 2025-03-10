@@ -1,1 +1,2 @@
-ld: warning: no platform load command found in '/Users/jonkelley/Development/Tinkering/ipbp/stub.o', assuming: macOS
+ld: unknown options: -keep_relocs 
+clang: error: linker command failed with exit code 1 (use -v to see invocation)

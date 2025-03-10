@@ -1,10 +1,22 @@
-use std::{path::PathBuf, process::Stdio, time::SystemTime};
+use std::{
+    ffi::CString,
+    path::PathBuf,
+    process::Stdio,
+    ptr::{self, null_mut},
+    time::SystemTime,
+};
 
 use anyhow::Context;
 use cargo_metadata::camino::Utf8PathBuf;
 use clap::Parser;
+use diff::create_jump_table;
 use futures::StreamExt;
-use notify::{event::DataChange, Watcher};
+use itertools::Itertools;
+use notify::{
+    event::{DataChange, ModifyKind},
+    Watcher,
+};
+use object::write::Object;
 use serde::Deserialize;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt},
@@ -13,6 +25,7 @@ use tokio::{
 };
 
 mod diff;
+mod jumptable;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -24,6 +37,16 @@ async fn main() -> anyhow::Result<()> {
     hotreload_loop().await
 }
 
+/// The main loop of the hotreload process
+///
+/// 1. Create initial "fat" build
+/// 2. Identify hotpoints from the incrementals. We ignore dependency hotpoints for now, but eventually might want to aggregate workspace deps together.
+/// 3. Wait for changes to the main.rs file
+/// 4. Perform a "fast" build
+/// 5. Diff the object files, walking relocations, preserving local statics
+/// 6. Create a minimal patch file to load into the process, including the changed symbol list
+/// 7. Pause the process with lldb, run the "hotfn_load_binary_patch" command and then continue
+/// 8. Repeat
 async fn hotreload_loop() -> anyhow::Result<()> {
     // Save the state of the rust files
     let main_rs = PathBuf::from(workspace_root().join("packages/harness/src/main.rs"));
@@ -33,8 +56,184 @@ async fn hotreload_loop() -> anyhow::Result<()> {
     // Basically `touch main.rs` in the directory
     std::fs::File::open(&main_rs)?.set_modified(SystemTime::now())?;
 
-    let cur_exe = std::env::current_exe()?;
+    // Perform the initial build
+    let epoch = std::time::SystemTime::UNIX_EPOCH;
     let now = std::time::Instant::now();
+    let result = initial_build().await?;
+    println!(
+        "Initial build: {:?} -> {}",
+        now.elapsed(),
+        &result.output_location,
+    );
+
+    // copy the exe and give it a "fat" name
+    let exe = &result.output_location;
+    let fat_exe = exe.with_file_name(format!(
+        "fatharness-{}",
+        epoch.elapsed().unwrap().as_millis()
+    ));
+    std::fs::copy(&exe, &fat_exe).unwrap();
+
+    // Launch the fat exe. We'll overwrite the slim exe location, so this prevents the app from bugging out
+    // todo - we can launch exe with lldb directly to force aslr off. This won't work for wasm though
+    // let app = Command::new(&fat_exe)
+    //     .stdin(Stdio::piped())
+    //     .kill_on_drop(true)
+    //     .spawn()?;
+
+    let mut pid = 0;
+    unsafe {
+        let program_c = std::ffi::CString::new(fat_exe.as_os_str().to_str().unwrap()).unwrap();
+        let mut attr: libc::posix_spawnattr_t = unsafe { std::mem::zeroed() };
+        let ret = libc::posix_spawnattr_init(&mut attr);
+        if ret != 0 {
+            panic!("posix_spawnattr_init failed");
+        }
+
+        // Use current environment
+        extern "C" {
+            static environ: *const *const libc::c_char;
+        }
+
+        // Convert args to CStrings
+        let args: Vec<String> = vec![];
+        let mut args_vec: Vec<CString> = Vec::with_capacity(args.len() + 1);
+        args_vec.push(program_c.clone());
+        for arg in args {
+            args_vec.push(CString::new(arg)?);
+        }
+
+        // Create null-terminated array of pointers to args
+        let mut args_ptr: Vec<*const libc::c_char> =
+            args_vec.iter().map(|arg| arg.as_ptr()).collect();
+        args_ptr.push(ptr::null());
+
+        const POSIX_SPAWN_DISABLE_ASLR: libc::c_int = 0x0100;
+
+        // Set the flag to disable ASLR
+        let ret = libc::posix_spawnattr_setflags(
+            &mut attr,
+            (POSIX_SPAWN_DISABLE_ASLR) as _,
+            // (POSIX_SPAWN_DISABLE_ASLR | libc::POSIX_SPAWN_SETEXEC) as _,
+        );
+        if ret != 0 {
+            libc::posix_spawnattr_destroy(&mut attr);
+            panic!("posix_spawnattr_setflags failed");
+        }
+
+        let mut fileactions: libc::posix_spawn_file_actions_t = null_mut();
+        let ret = libc::posix_spawn_file_actions_init(&mut fileactions);
+
+        println!("Bout to spawn with attr: {:?}", attr);
+        libc::posix_spawn(
+            &mut pid,
+            program_c.as_ptr(),
+            &fileactions,
+            &attr,
+            args_ptr.as_ptr() as *const *mut libc::c_char,
+            environ as *const _,
+        );
+
+        println!("Spawning process with pid: {}", pid);
+    };
+
+    // // Launch with lldb, disabling ASLR
+    // let mut lldb = Command::new("lldb")
+    //     // .arg("-o")
+    //     // .arg("run")
+    //     .arg("-p")
+    //     .arg(format!("{}", unsafe { *pid }))
+    //     // .arg(format!("{}", app.id().unwrap()))
+    //     .arg(&fat_exe)
+    //     .kill_on_drop(true)
+    //     .stdin(Stdio::piped())
+    //     .stdout(Stdio::piped())
+    //     .spawn()?;
+
+    // // Immediately resume the process
+    // lldb.stdin
+    //     .as_mut()
+    //     .unwrap()
+    //     .write_all(b"process continue\n")
+    //     .await?;
+
+    let (tx, mut rx) = futures_channel::mpsc::unbounded();
+    let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+        _ = tx.unbounded_send(res);
+    })?;
+    watcher.watch(&main_rs, notify::RecursiveMode::NonRecursive)?;
+
+    while let Some(Ok(event)) = rx.next().await {
+        if event.kind != notify::EventKind::Modify(ModifyKind::Data(DataChange::Content)) {
+            continue;
+        }
+
+        // Memoize the contents of the main.rs file
+        let new_contents = std::fs::read_to_string(&main_rs).unwrap();
+        if new_contents == contents {
+            println!("File changed but contents didn't change");
+            continue;
+        }
+        contents = new_contents;
+
+        println!("Fast reloading... ");
+        let started = Instant::now();
+        let output_temp = fast_build(&result).await?;
+
+        let jump_table = create_jump_table(fat_exe.as_std_path(), output_temp.as_std_path());
+        println!("jump_table: {jump_table:#?}");
+        let jump_table_path = workspace_root().join("data").join("jump_table.bin");
+        std::fs::write(&jump_table_path, bincode::serialize(&jump_table).unwrap()).unwrap();
+
+        // // Pause the process with lldb, run the "hotfn_load_binary_patch" command and then continue
+        // lldb.stdin
+        //     .as_mut()
+        //     .unwrap()
+        //     .write_all(
+        //         format!(
+        //             "process interrupt\nexpr (void) hotfn_load_binary_patch(\"{}\", \"{}\")\ncontinue\n",
+        //             output_temp,
+        //             jump_table_path.display()
+        //         )
+        //         .as_bytes(),
+        //     )
+        //     .await?;
+
+        // println!("Patching complete in {}ms", started.elapsed().as_millis())
+    }
+
+    // drop(lldb);
+
+    Ok(())
+}
+
+/// Store the linker args in a file for the main process to read.
+async fn link(action: String) -> anyhow::Result<()> {
+    let args = std::env::args().collect::<Vec<String>>();
+
+    std::fs::write(
+        workspace_root().join("data").join("link.txt"),
+        args.join("\n"),
+    )?;
+
+    let out = args.iter().position(|arg| arg == "-o").unwrap();
+    let out_file = args[out + 1].clone();
+    let dummy_object_file = Object::new(
+        object::BinaryFormat::MachO,
+        object::Architecture::Aarch64,
+        object::Endianness::Big,
+    );
+    let bytes = dummy_object_file.write().unwrap();
+    std::fs::write(out_file, bytes)?;
+
+    Ok(())
+}
+
+async fn initial_build() -> anyhow::Result<CargoOutputResult> {
+    // Perform the initial build and print out the link arguments. Don't strip dead code and preserve temp files.
+    // This results in a "fat" executable that we can bind to
+    //
+    // todo: clean up the temps manually
     let inital_build = Command::new("cargo")
         .arg("rustc")
         .arg("--package")
@@ -47,204 +246,86 @@ async fn hotreload_loop() -> anyhow::Result<()> {
         .arg("json-diagnostic-rendered-ansi")
         .arg("--verbose")
         .arg("--")
-        .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
-        .env("HOTRELOAD_LINK", "start")
+        // these args are required to prevent DCE, save intermediates, and print the link args for future usage
+        .arg("-Clink-arg=-Wl,-all_load")
+        .arg("-Clink-dead-code")
+        .arg("-Csave-temps=true")
+        .arg("--print")
+        .arg("link-args")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true)
         .spawn()?;
 
-    let CargoOutputResult {
-        output_location: exe,
-        direct_rustc,
-    } = run_cargo_output(inital_build, false).await?;
-    println!("Initial build complete in: {:?}", now.elapsed());
+    run_cargo_output(inital_build, false).await
+}
 
-    // copy the exe and give it a "fat" name
-    let now = std::time::SystemTime::UNIX_EPOCH;
-    let fat_exe = exe.with_file_name(format!("fatharness-{}", now.elapsed().unwrap().as_millis()));
-    std::fs::copy(&exe, &fat_exe)?;
-
-    // Launch the fat exe. We'll overwrite the slim exe location, so this prevents the app from bugging out
-    let mut app = Command::new(fat_exe)
-        .stdin(Stdio::piped())
-        .kill_on_drop(true)
+async fn fast_build(original: &CargoOutputResult) -> anyhow::Result<Utf8PathBuf> {
+    let fast_build = Command::new(original.direct_rustc[0].clone())
+        .args(original.direct_rustc[1..].iter())
+        .arg("-C")
+        .arg(format!(
+            "linker={}",
+            std::env::current_exe().unwrap().display()
+        ))
+        .env("HOTRELOAD_LINK", "reload")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
-    let mut app_stdin = app.stdin.take().unwrap();
 
-    let (tx, mut rx) = futures_channel::mpsc::unbounded();
-    let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
-        _ = tx.unbounded_send(res);
-    })?;
+    let output = run_cargo_output(fast_build, true).await?;
 
-    watcher.watch(&main_rs, notify::RecursiveMode::NonRecursive)?;
+    let object_files = output
+        .link_args
+        .iter()
+        .filter(|arg| arg.ends_with(".rcgu.o"))
+        .sorted()
+        .collect::<Vec<_>>();
 
-    while let Some(Ok(event)) = rx.next().await {
-        if event.kind
-            != notify::EventKind::Modify(notify::event::ModifyKind::Data(DataChange::Content))
-        {
-            continue;
-        }
+    println!("Fast link objects: {:?}", object_files);
 
-        let new_contents = std::fs::read_to_string(&main_rs).unwrap();
-        if new_contents == contents {
-            println!("File changed but contents didn't change");
-            continue;
-        }
-        contents = new_contents;
+    let epoch = std::time::SystemTime::UNIX_EPOCH;
+    let target_loc = original
+        .output_location
+        .with_file_name(format!("patch-{}", epoch.elapsed().unwrap().as_millis()));
 
-        println!("Fast reloading... ");
+    println!("target_loc: {target_loc:?}");
 
-        // going through rustc directly
-        // .arg("rustc")
-        // .arg("--package")
-        // .arg("harness")
-        // .arg("--bin")
-        // .arg("harness")
-        // .arg("--profile")
-        // .arg("hotreload")
-        // .arg("--message-format")
-        // .arg("json-diagnostic-rendered-ansi")
-        // .arg("--verbose")
-        // .arg("--")
-        // .arg(format!("-Clinker={}", cur_exe.canonicalize()?.display()))
-        // .arg(format!("-Cdebuginfo=0"))
+    // we should throw out symbols that we don't need and/or assemble them manually
+    let res = Command::new("cc")
+        .args(object_files)
+        .arg("-dylib")
+        .arg("-Wl,-undefined,dynamic_lookup")
+        .arg("-Wl,-unexported_symbol,_main")
+        .arg("-arch")
+        .arg("arm64")
+        .arg("-o")
+        .arg(&target_loc)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .await?;
+    let errs = String::from_utf8_lossy(&res.stderr);
+    println!("errs: {errs}");
 
-        let fast_build = Command::new(direct_rustc[0].clone())
-            .args(direct_rustc[1..].iter())
-            .env("HOTRELOAD_LINK", "reload")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
+    // println!("Fast link args: {:?}", output.link_args);
+    // .arg("-undefined")
+    // .arg("dynamic_lookup")
+    // .arg("-Wl,-export_dynamic")
+    // .arg("-Wl,-exported_symbol,__ZN7harness3app17h0df796a0810dae7cE")
+    // .arg("-Wl,-exported_symbol,___ZN7harness3app17h0df796a0810dae7cE")
+    // .arg("-Wl,-exported_symbol,_ZN7harness3app17h0df796a0810dae7cE")
+    // .arg("-Wl,-all_load")
+    //         // -O0 ? supposedly faster
+    //         // -reproducible - even better?
+    //         // -exported_symbol and friends - could help with dead-code stripping
+    //         // -e symbol_name - for setting the entrypoint
+    //         // -keep_relocs ?
+    // .arg("-Clink-dead-code")
+    // .arg("-Wl,-unexported_symbol,_main")
+    // .arg("-dead_strip") // maybe?
 
-        let started = Instant::now();
-        let output = run_cargo_output(fast_build, false).await;
-        let output = match output {
-            Ok(output) => output.output_location,
-            Err(e) => {
-                println!("cargo failed: {e:?}");
-                continue;
-            }
-        };
-
-        let output_temp =
-            output.with_file_name(format!("output-{}", now.elapsed().unwrap().as_millis()));
-        std::fs::copy(&output, &output_temp).unwrap();
-
-        println!("output: {:?}", output_temp);
-
-        // write the new object file to the stdin of the app
-        app_stdin
-            .write_all(format!("{}\n", output_temp).as_bytes())
-            .await?;
-        println!("took {:?}", started.elapsed());
-    }
-
-    drop(app);
-
-    Ok(())
-}
-
-async fn link(action: String) -> anyhow::Result<()> {
-    let args = std::env::args().collect::<Vec<String>>();
-
-    std::fs::write(workspace_root().join("link.txt"), args.join("\n"))?;
-
-    match action.as_str() {
-        // This is the first time we're running the linker - don't strip any symbols. we want them there during hot-reloads
-        "start" => {
-            let args = args
-                .into_iter()
-                .skip(1)
-                .filter(|arg| arg != "-Wl,-dead_strip")
-                .collect::<Vec<String>>();
-
-            let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
-            cache_incrementals(object_files.as_ref());
-
-            // Run ld with the args
-            let res = Command::new("cc").args(args).output().await?;
-            let err = String::from_utf8_lossy(&res.stderr);
-            std::fs::write(workspace_root().join("link_errs.txt"), &*err).unwrap();
-
-            return Ok(());
-        }
-
-        // This is a hot-reload. Don't rebuild with any .rlib files.
-        // Eventually, perform a smarter analysis
-        "reload" => {
-            let index_of_out = args.iter().position(|arg| arg == "-o").unwrap();
-            let out_file = args[index_of_out + 1].clone();
-            let object_files: Vec<_> = args.iter().filter(|arg| arg.ends_with(".o")).collect();
-
-            cache_incrementals(object_files.as_ref());
-
-            let patch_target =
-                "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/harness".into();
-
-            let main_ptr = std::fs::read_to_string(workspace_root().join("harnessaddr.txt"))
-                .unwrap()
-                .parse()
-                .unwrap();
-
-            diff::attempt_partial_link(main_ptr, patch_target, out_file.clone().into()).await;
-
-            // -O0 ? supposedly faster
-            // -reproducible - even better?
-            // -exported_symbol and friends - could help with dead-code stripping
-            // -e symbol_name - for setting the entrypoint
-            // -keep_relocs ?
-
-            // run the linker, but unexport the `_main` symbol
-            let res = Command::new("cc")
-                .args(object_files)
-                .arg("-dylib")
-                .arg("-undefined")
-                .arg("dynamic_lookup")
-                .arg("-Wl,-unexported_symbol,_main")
-                .arg("-arch")
-                .arg("arm64")
-                .arg("-dead_strip") // maybe?
-                .arg("-o")
-                .arg(&out_file)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .output()
-                .await?;
-
-            let err = String::from_utf8_lossy(&res.stderr);
-            std::fs::write(workspace_root().join("link_errs.txt"), &*err).unwrap();
-        }
-
-        _ => panic!("don't know"),
-    }
-
-    Ok(())
-}
-
-/// Move all previous object files to "incremental-old" and all new object files to "incremental-new"
-fn cache_incrementals(object_files: &[&String]) {
-    let old = workspace_root().join("data").join("incremental-old");
-    let new = workspace_root().join("data").join("incremental-new");
-
-    // Remove the old incremental-old directory if it exists
-    _ = std::fs::remove_dir_all(&old);
-
-    // Rename incremental-new to incremental-old if it exists. Faster than moving all the files
-    _ = std::fs::rename(&new, &old);
-
-    // Create the new incremental-new directory to place the outputs in
-    std::fs::create_dir_all(&new).unwrap();
-
-    // Now drop in all the new object files
-    for o in object_files.iter() {
-        if !o.ends_with(".rcgu.o") {
-            continue;
-        }
-
-        let path = PathBuf::from(o);
-        std::fs::copy(&path, new.join(path.file_name().unwrap())).unwrap();
-    }
+    Ok(target_loc)
 }
 
 fn workspace_root() -> PathBuf {
@@ -254,6 +335,7 @@ fn workspace_root() -> PathBuf {
 struct CargoOutputResult {
     output_location: Utf8PathBuf,
     direct_rustc: Vec<String>,
+    link_args: Vec<String>,
 }
 
 async fn run_cargo_output(
@@ -266,6 +348,7 @@ async fn run_cargo_output(
     let mut stdout = stdout.lines();
     let mut stderr = stderr.lines();
 
+    let mut link_args = vec![];
     let mut direct_rustc = vec![];
 
     loop {
@@ -320,6 +403,10 @@ async fn run_cargo_output(
                         direct_rustc.extend(shell_words::split(args).unwrap());
                     }
 
+                    if word.trim().starts_with("env") {
+                        link_args = shell_words::split(&word).unwrap();
+                    }
+
                     #[derive(Debug, Deserialize)]
                     struct RustcArtifact {
                         artifact: PathBuf,
@@ -347,6 +434,32 @@ async fn run_cargo_output(
 
     Ok(CargoOutputResult {
         output_location,
+        link_args,
         direct_rustc,
     })
+}
+
+/// Move all previous object files to "incremental-old" and all new object files to "incremental-new"
+fn cache_incrementals(object_files: &[&String]) {
+    let old = workspace_root().join("data").join("incremental-old");
+    let new = workspace_root().join("data").join("incremental-new");
+
+    // Remove the old incremental-old directory if it exists
+    _ = std::fs::remove_dir_all(&old);
+
+    // Rename incremental-new to incremental-old if it exists. Faster than moving all the files
+    _ = std::fs::rename(&new, &old);
+
+    // Create the new incremental-new directory to place the outputs in
+    std::fs::create_dir_all(&new).unwrap();
+
+    // Now drop in all the new object files
+    for o in object_files.iter() {
+        if !o.ends_with(".rcgu.o") {
+            continue;
+        }
+
+        let path = PathBuf::from(o);
+        std::fs::copy(&path, new.join(path.file_name().unwrap())).unwrap();
+    }
 }

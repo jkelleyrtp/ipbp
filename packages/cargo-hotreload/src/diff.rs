@@ -12,99 +12,62 @@ use std::{
 };
 use tokio::process::Command;
 
-#[tokio::test]
-async fn _attempt_partial_link() {
-    let addr: u64 = std::fs::read_to_string(workspace_dir().join("harnessaddr.txt"))
-        .unwrap()
-        .parse()
-        .unwrap();
+#[derive(serde::Serialize, Debug)]
+pub struct JumpTable {
+    // old -> new
+    // does not take into account the base address of the patch when loaded into memory - need dlopen for that
+    pub map: HashMap<u64, u64>,
+}
 
-    let patch_target =
-        "/Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/harness".into();
+pub fn create_jump_table(original: &Path, patch: &Path) -> JumpTable {
+    let obj1_bytes = std::fs::read(original).unwrap();
+    let obj2_bytes = std::fs::read(patch).unwrap();
+    let obj1 = File::parse(&obj1_bytes as &[u8]).unwrap();
+    let obj2 = File::parse(&obj2_bytes as &[u8]).unwrap();
 
-    attempt_partial_link(addr, patch_target, workspace_dir().join("partial.o")).await;
+    let mut map = HashMap::new();
+
+    let old_syms = obj1.symbol_map();
+    let new_syms = obj2.symbol_map();
+
+    let old_name_to_addr = old_syms
+        .symbols()
+        .iter()
+        .map(|s| (s.name(), s.address()))
+        .collect::<HashMap<_, _>>();
+
+    let new_name_to_addr = new_syms
+        .symbols()
+        .iter()
+        .map(|s| (s.name(), s.address()))
+        .collect::<HashMap<_, _>>();
+
+    for (new_name, new_addr) in new_name_to_addr {
+        if let Some(old_addr) = old_name_to_addr.get(new_name) {
+            map.insert(*old_addr, new_addr);
+        }
+    }
+
+    JumpTable { map }
 }
 
 pub async fn attempt_partial_link(proc_main_addr: u64, patch_target: PathBuf, out_path: PathBuf) {
     let mut object = ObjectDiff::new().unwrap();
     object.load().unwrap();
-
-    let all_exports = object
-        .new
-        .iter()
-        .flat_map(|(_, f)| f.file.exports().unwrap())
-        .map(|e| e.name().to_utf8())
-        .collect::<HashSet<_>>();
-
-    let mut adrp_imports = HashSet::new();
-
-    let mut satisfied_exports = HashSet::new();
-
-    let modified_symbols = object
-        .modified_symbols
-        .iter()
-        .map(|f| f.as_str())
-        .collect::<HashSet<_>>();
-
-    if modified_symbols.is_empty() {
-        println!("No modified symbols");
-    }
-
-    let mut modified_log = String::new();
-    for m in modified_symbols.iter() {
-        // if m.starts_with("l") {
-        //     continue;
-        // }
-
-        let path = object.find_path_to_main(m);
-        println!("m: {m}");
-        println!("path: {path:#?}\n");
-        modified_log.push_str(&format!("{m}\n"));
-        modified_log.push_str(&format!("{path:#?}\n"));
-    }
-    std::fs::write(workspace_dir().join("modified_symbols.txt"), modified_log).unwrap();
-
-    let modified = object
-        .modified_files
-        .iter()
-        .sorted_by(|a, b| a.0.cmp(&b.0))
-        .collect::<Vec<_>>();
-
-    // Figure out which symbols are required from *existing* code
-    // We're going to create a stub `.o` file that satisfies these by jumping into the original code via a dynamic lookup / and or literally just manually doing it
-    for fil in modified.iter() {
-        let f = object
-            .new
-            .get(fil.0.file_name().unwrap().to_str().unwrap())
-            .unwrap();
-
-        for i in f.file.imports().unwrap() {
-            if all_exports.contains(i.name().to_utf8()) {
-                adrp_imports.insert(i.name().to_utf8());
-            }
-        }
-
-        for e in f.file.exports().unwrap() {
-            satisfied_exports.insert(e.name().to_utf8());
-        }
-    }
-
-    // Remove any imports that are indeed satisifed
-    for s in satisfied_exports.iter() {
-        adrp_imports.remove(s);
-    }
+    let diff = object.diff().unwrap();
 
     // Assemble the stub
-    let stub_data = make_stub_file(proc_main_addr, patch_target, adrp_imports);
+    let stub_data = make_stub_file(proc_main_addr, patch_target, diff.adrp_imports);
     let stub_file = workspace_dir().join("stub.o");
     std::fs::write(&stub_file, stub_data).unwrap();
 
     let out = Command::new("cc")
-        .args(modified.iter().map(|(f, _)| f))
+        .args(diff.modified_files.iter().map(|(f, _)| f))
         .arg(stub_file)
         .arg("-dylib")
         .arg("-Wl,-undefined,dynamic_lookup")
         .arg("-Wl,-unexported_symbol,_main")
+        .arg("-Wl,-keep_relocs")
         .arg("-arch")
         .arg("arm64")
         .arg("-dead_strip")
@@ -119,32 +82,10 @@ pub async fn attempt_partial_link(proc_main_addr: u64, patch_target: PathBuf, ou
     std::fs::write(workspace_dir().join("link_errs_partial.txt"), &*err).unwrap();
 }
 
-fn make_stub_file(
-    proc_main_addr: u64,
-    patch_target: PathBuf,
-    adrp_imports: HashSet<&str>,
-) -> Vec<u8> {
-    let data = fs::read(&patch_target).unwrap();
-    let old = File::parse(&data as &[u8]).unwrap();
-    let main_sym = old.symbol_by_name_bytes(b"_main").unwrap();
-    let aslr_offset = proc_main_addr - main_sym.address();
-    let addressed = old
-        .symbols()
-        .filter_map(|sym| {
-            adrp_imports
-                .get(sym.name().ok()?)
-                .copied()
-                .map(|o| (o, sym.address() + aslr_offset))
-        })
-        .collect::<HashMap<_, _>>();
-
-    build_stub(
-        old.format(),
-        old.architecture(),
-        old.endianness(),
-        addressed,
-    )
-    .unwrap()
+struct ObjectDiffResult<'a> {
+    adrp_imports: HashSet<&'a str>,
+    modified_files: Vec<(&'a PathBuf, &'a HashSet<String>)>,
+    modified_symbols: HashSet<&'a String>,
 }
 
 struct ObjectDiff {
@@ -163,6 +104,69 @@ impl ObjectDiff {
             modified_files: Default::default(),
             modified_symbols: Default::default(),
             parents: Default::default(),
+        })
+    }
+
+    fn diff(&self) -> Result<ObjectDiffResult<'_>> {
+        let all_exports = self
+            .new
+            .iter()
+            .flat_map(|(_, f)| f.file.exports().unwrap())
+            .map(|e| e.name().to_utf8())
+            .collect::<HashSet<_>>();
+
+        let mut adrp_imports = HashSet::new();
+
+        let mut satisfied_exports = HashSet::new();
+
+        let modified_symbols = self.modified_symbols.iter().collect::<HashSet<_>>();
+
+        if modified_symbols.is_empty() {
+            println!("No modified symbols");
+        }
+
+        let mut modified_log = String::new();
+        for m in modified_symbols.iter() {
+            let path = self.find_path_to_main(m);
+            modified_log.push_str(&format!("{m}\n"));
+            modified_log.push_str(&format!("{path:#?}\n"));
+        }
+        std::fs::write(workspace_dir().join("modified_symbols.txt"), modified_log).unwrap();
+
+        let modified = self
+            .modified_files
+            .iter()
+            .sorted_by(|a, b| a.0.cmp(&b.0))
+            .collect::<Vec<_>>();
+
+        // Figure out which symbols are required from *existing* code
+        // We're going to create a stub `.o` file that satisfies these by jumping into the original code via a dynamic lookup / and or literally just manually doing it
+        for fil in modified.iter() {
+            let f = self
+                .new
+                .get(fil.0.file_name().unwrap().to_str().unwrap())
+                .unwrap();
+
+            for i in f.file.imports().unwrap() {
+                if all_exports.contains(i.name().to_utf8()) {
+                    adrp_imports.insert(i.name().to_utf8());
+                }
+            }
+
+            for e in f.file.exports().unwrap() {
+                satisfied_exports.insert(e.name().to_utf8());
+            }
+        }
+
+        // Remove any imports that are indeed satisifed
+        for s in satisfied_exports.iter() {
+            adrp_imports.remove(s);
+        }
+
+        Ok(ObjectDiffResult {
+            adrp_imports,
+            modified_files: modified,
+            modified_symbols,
         })
     }
 
@@ -445,6 +449,7 @@ fn acc_symbols<'a>(new: &'a File<'a>, section_idx: SectionIndex) -> Vec<Relocate
 
     // No symbols, no symbols,
     if sorted.is_empty() {
+        println!("No symbols for section: {:?}", section.name());
         return vec![];
     }
 
@@ -723,4 +728,32 @@ fn build_stub(
     }
 
     obj.write().context("Failed to write object file")
+}
+
+fn make_stub_file(
+    proc_main_addr: u64,
+    patch_target: PathBuf,
+    adrp_imports: HashSet<&str>,
+) -> Vec<u8> {
+    let data = fs::read(&patch_target).unwrap();
+    let old = File::parse(&data as &[u8]).unwrap();
+    let main_sym = old.symbol_by_name_bytes(b"_main").unwrap();
+    let aslr_offset = proc_main_addr - main_sym.address();
+    let addressed = old
+        .symbols()
+        .filter_map(|sym| {
+            adrp_imports
+                .get(sym.name().ok()?)
+                .copied()
+                .map(|o| (o, sym.address() + aslr_offset))
+        })
+        .collect::<HashMap<_, _>>();
+
+    build_stub(
+        old.format(),
+        old.architecture(),
+        old.endianness(),
+        addressed,
+    )
+    .unwrap()
 }

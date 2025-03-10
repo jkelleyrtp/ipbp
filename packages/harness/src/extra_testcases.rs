@@ -1,15 +1,6 @@
-use binary_patch::subsecond;
-use binary_patch::*;
-use dioxus::prelude::*;
-
-fn main() {
-    dioxus::launch(binary_patch::hotreloadable(__app));
-}
-
-#[no_mangle]
-pub fn __app() -> Element {
+fn app() -> Element {
     let mut count = use_signal(|| 0);
-    let abcv = 9113;
+    let abcv = 91;
 
     rsx! {
         h1 { "{count}" }
