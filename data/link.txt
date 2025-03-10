@@ -1,5 +1,5 @@
 /Users/jonkelley/Development/Tinkering/ipbp/target/debug/cargo-hotreload
-/var/folders/zs/gvrfkj8x33d39cvw2p06yc700000gn/T/rustcfIapgV/symbols.o
+/var/folders/zs/gvrfkj8x33d39cvw2p06yc700000gn/T/rustccJylPa/symbols.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-a667d17d6a48bc1b.00urbdwi3w8m92k8nx8utjunt.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-a667d17d6a48bc1b.01qdq1mlaf21juzwnyig23sd2.rcgu.o
 /Users/jonkelley/Development/Tinkering/ipbp/target/hotreload/deps/harness-a667d17d6a48bc1b.0b8if3yay8co8u0dgc0la6c5b.rcgu.o

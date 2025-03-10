@@ -1,5 +1,5 @@
 pub use dioxus::desktop::window;
-use dioxus::prelude::*;
+use dioxus::{html::link::r#as, prelude::*};
 use jumptable::JumpTableRead;
 use libc::{dladdr, Dl_info};
 use libloading::os::unix::{Library, RTLD_NOW};
@@ -7,8 +7,8 @@ use libloading::os::unix::{RTLD_GLOBAL, RTLD_LAZY};
 use memmap::MmapOptions;
 use object::{Object, ObjectSymbol};
 use std::{
-    any::type_name_of_val, collections::HashMap, env, ffi::c_void, fs, path::PathBuf,
-    ptr::null_mut, sync::Arc,
+    any::type_name_of_val, collections::HashMap, env, ffi::c_void, fs, mem::transmute_copy,
+    ops::Deref, path::PathBuf, ptr::null_mut, sync::Arc,
 };
 use tokio::io::AsyncBufReadExt;
 
@@ -19,29 +19,16 @@ pub mod subsecond;
 pub use hotreload_macro::hotreload_start as start;
 
 static mut APP_JUMP_TABLE: Option<JumpTableRead> = None;
-static mut APP_SYM_NAME: Option<&'static str> = None;
-static mut ORIGINAL_APP_MAIN: Option<*const fn() -> Element> = None;
-static mut APP_MAIN: Option<*const fn() -> Element> = None;
+static mut ORIGINAL_APP_MAIN: Option<fn() -> Element> = None;
+static mut APP_MAIN: Option<fn() -> Element> = None;
 static mut HOTRELOAD_HANDLERS: Vec<Arc<dyn Fn()>> = vec![];
 
 pub fn hotreloadable(f: fn() -> Element) -> fn() -> Element {
     unsafe {
         let ptr = f as *const fn() -> Element;
 
-        ORIGINAL_APP_MAIN = Some(f as *const fn() -> Element);
-        APP_MAIN = Some(f as *const fn() -> Element);
-        APP_SYM_NAME = {
-            let mut info = Dl_info {
-                dli_fname: null_mut(),
-                dli_fbase: null_mut(),
-                dli_sname: null_mut(),
-                dli_saddr: null_mut(),
-            };
-            dladdr(ptr as *const c_void, &mut info);
-            Some(std::ffi::CStr::from_ptr(info.dli_sname).to_str().unwrap())
-        };
-
-        println!("hotreloadable: {:?}", APP_SYM_NAME);
+        ORIGINAL_APP_MAIN = Some(f);
+        APP_MAIN = Some(f);
     }
 
     inner_reloadable
@@ -53,9 +40,10 @@ pub fn inner_reloadable() -> Element {
         HOTRELOAD_HANDLERS.push(needs_update);
     });
 
+    println!("Rendering inner!");
+
     unsafe {
         if let Some(app_main) = APP_MAIN {
-            let app_main = std::mem::transmute::<*const fn() -> Element, fn() -> Element>(app_main);
             app_main()
         } else {
             todo!()
@@ -75,35 +63,77 @@ pub extern "C" fn hotfn_load_binary_patch(path: *const i8, jump_table_path: *con
         bincode::deserialize(&std::fs::read(jump_table_path).unwrap()).unwrap();
     let path_str = unsafe { std::ffi::CStr::from_ptr(path).to_str().unwrap() };
     let so = PathBuf::from(path_str);
-    let lib =
-        unsafe { libloading::os::unix::Library::open(Some(so), RTLD_NOW | RTLD_GLOBAL).unwrap() };
+    let lib = unsafe { libloading::os::unix::Library::new(so).unwrap() };
+    // unsafe { libloading::os::unix::Library::new(Some(so), RTLD_NOW | RTLD_GLOBAL).unwrap() };
+    // unsafe { libloading::os::unix::Library::open(Some(so), RTLD_NOW | RTLD_GLOBAL).unwrap() };
     let lib = Box::leak(Box::new(lib));
 
+    // original calc is right...
+    // 0x100029b9c
+    // 0x100029b9c
+
+    // 0x21fe8fa9c - 0x125dedb9c + 0x125dc4000 = 0x21fe65f00 bur we're using base_address of 0x11fe65f00.
+    //
+    // 0x125dedb9c is the actual symbol
+    // burt we're using 0x21fe8fa9c
+
     // use dladdr to get the baseaddress of the binary. This will be used to fix the jump table since the base address is usually 0
-    let mut info = Dl_info {
-        dli_fname: null_mut(),
-        dli_fbase: null_mut(),
-        dli_sname: null_mut(),
-        dli_saddr: null_mut(),
-    };
-    let main_sym = unsafe { lib.get::<unsafe extern "C" fn() -> Element>(b"_main") }
+    // let mut info = Dl_info {
+    //     dli_fname: null_mut(),
+    //     dli_fbase: null_mut(),
+    //     dli_sname: null_mut(),
+    //     dli_saddr: null_mut(),
+    // };
+    let exec_header = unsafe { lib.get::<*const ()>(b"_mh_execute_header") }
         .unwrap()
         .as_raw_ptr();
-    unsafe { dladdr(main_sym, &mut info) };
-    let base_address = info.dli_fbase as u64;
-    for (old, new) in jump_table.map.iter_mut() {
-        *new += base_address;
-    }
+    // unsafe { dladdr(main_sym, &mut info) };
+
+    // exec header is 0x11C240000
+    let dl_offset = exec_header.wrapping_sub(0x0000000100000000);
+    println!("Offset of binary in memory: {:?}", dl_offset as *const ());
+    // for (old, new) in jump_table.map.iter_mut() {
+    //     *new += dl_offset as u64;
+    // }
 
     unsafe {
         let original = ORIGINAL_APP_MAIN.unwrap();
-        APP_MAIN =
-            Some(jump_table.map.get(&(original as u64)).unwrap().clone() as *const fn() -> Element);
+        let new_main = jump_table.map.get(&(original as u64)).unwrap().clone() as *mut c_void;
+        // let sym: libloading::os::unix::Symbol<fn() -> Result<VNode, RenderError>> =
+        //     unsafe { lib.get::<fn() -> Element>(b"__app") }.unwrap();
+
+        // let f = sym.as_raw_ptr();
+        // let actualfn = sym.deref().clone();
+
+        // APP_MAIN = Some(actualfn);
+
+        // let sym_raw_ptr = sym.as_raw_ptr();
+        let guess = new_main.wrapping_add(dl_offset as usize);
+        // println!("sym addr: {:?}", sym_raw_ptr); // 0x11c269b9c
+        println!("new_main addr: {:?}", new_main); // 0x100029b9c
+        println!("We guess it's at: {:?}", guess);
+
+        // println!("actualfn: {:?}", actualfn);
+        let _f = transmute_copy(&guess);
+        println!("guess_f: {:?}", _f);
+        APP_MAIN = Some(_f);
+
+        // let new_main = (new_main as u64 + dl_offset) as *const fn() -> Element;
+        // assert_eq!(new_main, sym_raw_ptr as *const fn() -> Element);
+
+        // println!(
+        //     "Patching main to: {:?} using _mh_execute_header: {:?} with base_address: {:?}. original: {:?}",
+        //     new_main, exec_header, dl_offset as *const (), (new_main as u64 - dl_offset) as *const ()
+        // );
+        // APP_MAIN = Some(&*sym.into_raw());
+        // APP_MAIN = Some(*&*new_main);
     }
 
     for handler in unsafe { HOTRELOAD_HANDLERS.iter() } {
         handler();
     }
+
+    println!("Finished hotreload handler");
 }
 
 // we should maybe modify the lookups to not be in the deps folder;

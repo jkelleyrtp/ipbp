@@ -137,25 +137,25 @@ async fn hotreload_loop() -> anyhow::Result<()> {
         println!("Spawning process with pid: {}", pid);
     };
 
-    // // Launch with lldb, disabling ASLR
-    // let mut lldb = Command::new("lldb")
-    //     // .arg("-o")
-    //     // .arg("run")
-    //     .arg("-p")
-    //     .arg(format!("{}", unsafe { *pid }))
-    //     // .arg(format!("{}", app.id().unwrap()))
-    //     .arg(&fat_exe)
-    //     .kill_on_drop(true)
-    //     .stdin(Stdio::piped())
-    //     .stdout(Stdio::piped())
-    //     .spawn()?;
+    // Launch with lldb, disabling ASLR
+    let mut lldb = Command::new("lldb")
+        // .arg("-o")
+        // .arg("run")
+        .arg("-p")
+        .arg(format!("{}", pid))
+        // .arg(format!("{}", app.id().unwrap()))
+        .arg(&fat_exe)
+        .kill_on_drop(true)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
 
-    // // Immediately resume the process
-    // lldb.stdin
-    //     .as_mut()
-    //     .unwrap()
-    //     .write_all(b"process continue\n")
-    //     .await?;
+    // Immediately resume the process
+    lldb.stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"process continue\n")
+        .await?;
 
     let (tx, mut rx) = futures_channel::mpsc::unbounded();
     let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
@@ -181,28 +181,28 @@ async fn hotreload_loop() -> anyhow::Result<()> {
         let output_temp = fast_build(&result).await?;
 
         let jump_table = create_jump_table(fat_exe.as_std_path(), output_temp.as_std_path());
-        println!("jump_table: {jump_table:#?}");
+        // println!("jump_table: {jump_table:#?}");
         let jump_table_path = workspace_root().join("data").join("jump_table.bin");
         std::fs::write(&jump_table_path, bincode::serialize(&jump_table).unwrap()).unwrap();
 
-        // // Pause the process with lldb, run the "hotfn_load_binary_patch" command and then continue
-        // lldb.stdin
-        //     .as_mut()
-        //     .unwrap()
-        //     .write_all(
-        //         format!(
-        //             "process interrupt\nexpr (void) hotfn_load_binary_patch(\"{}\", \"{}\")\ncontinue\n",
-        //             output_temp,
-        //             jump_table_path.display()
-        //         )
-        //         .as_bytes(),
-        //     )
-        //     .await?;
+        // Pause the process with lldb, run the "hotfn_load_binary_patch" command and then continue
+        lldb.stdin
+            .as_mut()
+            .unwrap()
+            .write_all(
+                format!(
+                    "process interrupt\nexpr (void) hotfn_load_binary_patch(\"{}\", \"{}\")\ncontinue\n",
+                    output_temp,
+                    jump_table_path.display()
+                )
+                .as_bytes(),
+            )
+            .await?;
 
-        // println!("Patching complete in {}ms", started.elapsed().as_millis())
+        println!("Patching complete in {}ms", started.elapsed().as_millis())
     }
 
-    // drop(lldb);
+    drop(lldb);
 
     Ok(())
 }
@@ -296,7 +296,8 @@ async fn fast_build(original: &CargoOutputResult) -> anyhow::Result<Utf8PathBuf>
         .args(object_files)
         .arg("-dylib")
         .arg("-Wl,-undefined,dynamic_lookup")
-        .arg("-Wl,-unexported_symbol,_main")
+        .arg("-Wl,-export_dynamic")
+        // .arg("-Wl,-unexported_symbol,_main")
         .arg("-arch")
         .arg("arm64")
         .arg("-o")
@@ -400,7 +401,7 @@ async fn run_cargo_output(
                             .trim_start_matches("Running `")
                             .trim_end_matches('`');
 
-                        direct_rustc.extend(shell_words::split(args).unwrap());
+                        direct_rustc = shell_words::split(args).unwrap();
                     }
 
                     if word.trim().starts_with("env") {

@@ -3,13 +3,12 @@ use binary_patch::*;
 use dioxus::prelude::*;
 
 fn main() {
-    dioxus::launch(binary_patch::hotreloadable(__app));
+    dioxus::launch(binary_patch::hotreloadable(app));
 }
 
-#[no_mangle]
-pub fn __app() -> Element {
+fn app() -> Element {
     let mut count = use_signal(|| 0);
-    let abcv = 9113;
+    let abcv = 123;
 
     rsx! {
         h1 { "{count}" }
