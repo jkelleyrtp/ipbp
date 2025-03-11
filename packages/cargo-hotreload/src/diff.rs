@@ -17,6 +17,12 @@ pub struct JumpTable {
     // old -> new
     // does not take into account the base address of the patch when loaded into memory - need dlopen for that
     pub map: HashMap<u64, u64>,
+
+    /// the address of the main function in the new original binary
+    pub new_main_address: u64,
+
+    /// the address of the main function in the old original binary
+    pub old_main_address: u64,
 }
 
 pub fn create_jump_table(original: &Path, patch: &Path) -> JumpTable {
@@ -42,13 +48,31 @@ pub fn create_jump_table(original: &Path, patch: &Path) -> JumpTable {
         .map(|s| (s.name(), s.address()))
         .collect::<HashMap<_, _>>();
 
+    let old_main_address = old_syms
+        .symbols()
+        .iter()
+        .find(|s| s.name() == "_main")
+        .unwrap()
+        .address();
+
+    let new_main_address = new_syms
+        .symbols()
+        .iter()
+        .find(|s| s.name() == "_main")
+        .unwrap()
+        .address();
+
     for (new_name, new_addr) in new_name_to_addr {
         if let Some(old_addr) = old_name_to_addr.get(new_name) {
             map.insert(*old_addr, new_addr);
         }
     }
 
-    JumpTable { map }
+    JumpTable {
+        map,
+        old_main_address,
+        new_main_address,
+    }
 }
 
 pub async fn attempt_partial_link(proc_main_addr: u64, patch_target: PathBuf, out_path: PathBuf) {

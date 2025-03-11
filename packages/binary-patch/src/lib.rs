@@ -1,5 +1,5 @@
 pub use dioxus::desktop::window;
-use dioxus::{html::link::r#as, prelude::*};
+use dioxus::prelude::*;
 use jumptable::JumpTableRead;
 use libc::{dladdr, Dl_info};
 use libloading::os::unix::{Library, RTLD_NOW};
@@ -7,255 +7,239 @@ use libloading::os::unix::{RTLD_GLOBAL, RTLD_LAZY};
 use memmap::MmapOptions;
 use object::{Object, ObjectSymbol};
 use std::{
-    any::type_name_of_val, collections::HashMap, env, ffi::c_void, fs, mem::transmute_copy,
-    ops::Deref, path::PathBuf, ptr::null_mut, sync::Arc,
+    any::type_name_of_val,
+    collections::HashMap,
+    env,
+    ffi::{c_void, CStr},
+    fs,
+    hash::Hash,
+    mem::transmute_copy,
+    ops::Deref,
+    path::PathBuf,
+    ptr::null_mut,
+    sync::Arc,
 };
 use tokio::io::AsyncBufReadExt;
 
 mod deref_helper;
+pub mod iterate_phdr;
 pub mod jumptable;
 pub mod subsecond;
+pub mod subsecond2;
 
-pub use hotreload_macro::hotreload_start as start;
-
+// todo: if there's a reference held while we run our patch, this gets invalidated. should probably
+// be a pointer to a jump table instead, behind a cell or something. I believe Atomic + relaxed is basically a no-op
 static mut APP_JUMP_TABLE: Option<JumpTableRead> = None;
-static mut ORIGINAL_APP_MAIN: Option<fn() -> Element> = None;
-static mut APP_MAIN: Option<fn() -> Element> = None;
 static mut HOTRELOAD_HANDLERS: Vec<Arc<dyn Fn()>> = vec![];
 
-pub fn hotreloadable(f: fn() -> Element) -> fn() -> Element {
-    unsafe {
-        let ptr = f as *const fn() -> Element;
-
-        ORIGINAL_APP_MAIN = Some(f);
-        APP_MAIN = Some(f);
-    }
-
-    inner_reloadable
+pub const fn current<F: SomeFn + Copy>(f: F) -> HotFn<F> {
+    HotFn { inner: f }
 }
 
-pub fn inner_reloadable() -> Element {
-    use_hook(|| unsafe {
-        let needs_update = dioxus::prelude::schedule_update();
-        HOTRELOAD_HANDLERS.push(needs_update);
-    });
+pub struct HotFn<T: SomeFn> {
+    inner: T,
+}
 
-    println!("Rendering inner!");
+impl<T: SomeFn> HotFn<T> {
+    pub fn call(&self, args: T::Args) -> T::Return {
+        unsafe {
+            // Try to handle known function pointers. This is *really really* unsafe, but due to how
+            // rust trait objects work, it's impossible to make an arbitrary usize-sized type implement Fn()
+            // since that would require a vtable pointer, pushing out the bounds of the pointer size.
+            if size_of::<T>() == size_of::<fn() -> ()>() {
+                return self.inner.call_as_ptr(args);
+            }
 
-    unsafe {
-        if let Some(app_main) = APP_MAIN {
-            app_main()
-        } else {
-            todo!()
+            // Handle trait objects. This will occur for sizes other than usize. Normal rust functions
+            // become ZST's and thus their <T as SomeFn>::call becomes a function pointer to the function.
+            //
+            // For non-zst (trait object) types, then there might be an issue. The real call function
+            // will likely end up in the vtable and will never be hot-reloaded since signature takes self.
+            if let Some(jump_table) = APP_JUMP_TABLE.as_ref() {
+                let known_fn_ptr = <T as SomeFn>::call as *const ();
+                let ptr = jump_table.map.get(&(known_fn_ptr as u64)).unwrap().clone() as *const ();
+
+                // https://stackoverflow.com/questions/46134477/how-can-i-call-a-raw-address-from-rust
+                let _f =
+                    std::mem::transmute::<*const (), fn(&T, <T as SomeFn>::Args) -> T::Return>(ptr);
+                _f(&self.inner, args)
+            } else {
+                self.inner.call(args)
+            }
+        }
+    }
+}
+
+pub trait SomeFn {
+    type Args;
+    type Return;
+    type Real;
+
+    // rust-call isnt' stable, so we wrap the underyling call with our own, giving it a stable vtable entry
+    fn call(&self, args: Self::Args) -> Self::Return;
+
+    // call this as if it were a real function pointer. This is very unsafe
+    unsafe fn call_as_ptr(&self, _args: Self::Args) -> Self::Return;
+}
+
+impl<T, R> SomeFn for T
+where
+    T: Fn() -> R,
+{
+    type Args = ();
+    type Return = R;
+    type Real = fn() -> R;
+    fn call(&self, _args: Self::Args) -> Self::Return {
+        self()
+    }
+    unsafe fn call_as_ptr(&self, _args: Self::Args) -> Self::Return {
+        let real = std::mem::transmute_copy::<Self, Self::Real>(&self);
+
+        unsafe {
+            if let Some(jump_table) = APP_JUMP_TABLE.as_ref() {
+                let known_fn_ptr = real as *const ();
+                let ptr = jump_table.map.get(&(known_fn_ptr as u64)).unwrap().clone() as *const ();
+                let detoured = std::mem::transmute::<*const (), Self::Real>(ptr);
+                detoured()
+            } else {
+                real()
+            }
         }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn hotfn_load_binary_patch(path: *const i8, jump_table_path: *const i8) {
-    println!("executing hotfn_load_binary_patch... {path:?} {jump_table_path:?}");
+pub extern "C" fn hotfn_load_binary_patch__ipbp(path: *const i8, jump_table_path: *const i8) {
+    let patch = PathBuf::from(unsafe { CStr::from_ptr(path).to_str().unwrap() });
+    let jump_table = PathBuf::from(unsafe { CStr::from_ptr(jump_table_path).to_str().unwrap() });
+    run_patch(patch, jump_table)
+}
 
-    // Load the jump table by deserializing it from the file
-    let jump_table_path_str =
-        unsafe { std::ffi::CStr::from_ptr(jump_table_path).to_str().unwrap() };
-    let jump_table_path = PathBuf::from(jump_table_path_str);
-    let mut jump_table: JumpTableRead =
-        bincode::deserialize(&std::fs::read(jump_table_path).unwrap()).unwrap();
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path).to_str().unwrap() };
-    let so = PathBuf::from(path_str);
-    let lib = unsafe { libloading::os::unix::Library::new(so).unwrap() };
-    // unsafe { libloading::os::unix::Library::new(Some(so), RTLD_NOW | RTLD_GLOBAL).unwrap() };
-    // unsafe { libloading::os::unix::Library::open(Some(so), RTLD_NOW | RTLD_GLOBAL).unwrap() };
+/// Run the patch
+pub fn run_patch(patch: PathBuf, jump_table: PathBuf) {
+    let lib = unsafe { libloading::os::unix::Library::new(PathBuf::from(patch)).unwrap() };
     let lib = Box::leak(Box::new(lib));
 
-    // original calc is right...
-    // 0x100029b9c
-    // 0x100029b9c
+    // Load the jump table by deserializing it from the file
+    let jump_table_path = PathBuf::from(jump_table);
+    let mut jump_table: JumpTableRead =
+        bincode::deserialize(&std::fs::read(jump_table_path).unwrap()).unwrap();
 
-    // 0x21fe8fa9c - 0x125dedb9c + 0x125dc4000 = 0x21fe65f00 bur we're using base_address of 0x11fe65f00.
-    //
-    // 0x125dedb9c is the actual symbol
-    // burt we're using 0x21fe8fa9c
-
-    // use dladdr to get the baseaddress of the binary. This will be used to fix the jump table since the base address is usually 0
-    // let mut info = Dl_info {
-    //     dli_fname: null_mut(),
-    //     dli_fbase: null_mut(),
-    //     dli_sname: null_mut(),
-    //     dli_saddr: null_mut(),
-    // };
-    let exec_header = unsafe { lib.get::<*const ()>(b"_mh_execute_header") }
+    let old_dl_offset = unsafe { Library::this().get::<*const ()>(b"main") }
         .unwrap()
-        .as_raw_ptr();
-    // unsafe { dladdr(main_sym, &mut info) };
+        .as_raw_ptr()
+        .wrapping_sub(jump_table.old_main_address as usize);
 
-    // exec header is 0x11C240000
-    let dl_offset = exec_header.wrapping_sub(0x0000000100000000);
-    println!("Offset of binary in memory: {:?}", dl_offset as *const ());
-    // for (old, new) in jump_table.map.iter_mut() {
-    //     *new += dl_offset as u64;
-    // }
+    // Correct the jump table since dlopen will load the binary at a different address than the original
+    let new_dl_offset = unsafe { lib.get::<*const ()>(b"main") }
+        .unwrap()
+        .as_raw_ptr()
+        .wrapping_sub(jump_table.new_main_address as usize);
 
-    unsafe {
-        let original = ORIGINAL_APP_MAIN.unwrap();
-        let new_main = jump_table.map.get(&(original as u64)).unwrap().clone() as *mut c_void;
-        // let sym: libloading::os::unix::Symbol<fn() -> Result<VNode, RenderError>> =
-        //     unsafe { lib.get::<fn() -> Element>(b"__app") }.unwrap();
+    // Modify the jump table to be relative to the base address of the loaded library
+    jump_table.map = jump_table
+        .map
+        .iter()
+        .map(|(k, v)| (*k + old_dl_offset as u64, *v + new_dl_offset as u64))
+        .collect();
 
-        // let f = sym.as_raw_ptr();
-        // let actualfn = sym.deref().clone();
+    unsafe { APP_JUMP_TABLE = Some(jump_table) }
 
-        // APP_MAIN = Some(actualfn);
-
-        // let sym_raw_ptr = sym.as_raw_ptr();
-        let guess = new_main.wrapping_add(dl_offset as usize);
-        // println!("sym addr: {:?}", sym_raw_ptr); // 0x11c269b9c
-        println!("new_main addr: {:?}", new_main); // 0x100029b9c
-        println!("We guess it's at: {:?}", guess);
-
-        // println!("actualfn: {:?}", actualfn);
-        let _f = transmute_copy(&guess);
-        println!("guess_f: {:?}", _f);
-        APP_MAIN = Some(_f);
-
-        // let new_main = (new_main as u64 + dl_offset) as *const fn() -> Element;
-        // assert_eq!(new_main, sym_raw_ptr as *const fn() -> Element);
-
-        // println!(
-        //     "Patching main to: {:?} using _mh_execute_header: {:?} with base_address: {:?}. original: {:?}",
-        //     new_main, exec_header, dl_offset as *const (), (new_main as u64 - dl_offset) as *const ()
-        // );
-        // APP_MAIN = Some(&*sym.into_raw());
-        // APP_MAIN = Some(*&*new_main);
-    }
-
+    // And then call the original main function
     for handler in unsafe { HOTRELOAD_HANDLERS.iter() } {
         handler();
     }
-
-    println!("Finished hotreload handler");
 }
 
-// we should maybe modify the lookups to not be in the deps folder;
-//
-// https://stackoverflow.com/questions/9922949/how-to-print-the-ldlinker-search-path
-//
-// called `Result::unwrap()` on an `Err` value: DlOpen { desc: "dlopen(, 0x0009): tried: \'\' (no such file),
-//  \'/System/Volumes/Preboot/Cryptexes/OS\' (not a file), \'/usr/lib/\' (not a file, not in dyld cache),
-// \'\' (no such file),
-// \'/Users/jonkelley/Development/Tinkering/ipbp/target/debug/deps/\' (not a file),
-// \'/Users/jonkelley/Development/Tinkering/ipbp/target/debug/\' (not a file),
-// \'/Users/jonkelley/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/lib/\' (not a file),
-//  \'/Users/jonkelley/.rustup/toolchains/stable-aarch64-apple-darwin/lib/\' (not a file),
-// \'/Users/jonkelley/lib/\' (no such file),
-// \'/usr/local/lib/\' (not a file),
-// \'/usr/lib/\' (not a file, not in dyld cache)" }
+/// Creates a new hotreloadable function based on the incoming function. The "key" here is the caller location.
+/// If that changes then a new function will be generated. This basically lets us retour function pointers
+/// without annotating them.
+pub const fn hotreloadable(f: fn() -> Element) -> fn() -> Element {
+    static mut ORIGINAL_APP_MAIN: Option<fn() -> Element> = None;
 
-// /// Waits for stdin to send a new library
-// pub fn use_hotreload_component(name: &str, initial: fn() -> Element) -> Element {
-//     let mut library = use_signal(|| None as Option<&'static mut Library>);
-//     let mut libraries = use_signal(|| vec![]);
+    unsafe {
+        ORIGINAL_APP_MAIN = Some(f);
+    }
 
-//     use_hook(|| {
-//         spawn(async move {
-//             let stdin = tokio::io::stdin();
-//             let stdin = tokio::io::BufReader::new(stdin);
-//             let mut lines = stdin.lines();
-//             while let Ok(Some(line)) = lines.next_line().await {
-//                 let so = PathBuf::from(line);
+    // this can be simply injected to dioxus core perhaps?
+    pub fn inner_reloadable() -> Element {
+        // runtime integration...
+        use_hook(|| unsafe { HOTRELOAD_HANDLERS.push(dioxus::prelude::schedule_update()) });
 
-//                 // we *need* to leak the library otherwise it will cause issues with the process not exiting properly
-//                 use libloading::os::unix::{RTLD_GLOBAL, RTLD_LAZY};
-//                 let lib = unsafe {
-//                     libloading::os::unix::Library::open(Some(so), RTLD_LAZY | RTLD_GLOBAL).unwrap()
-//                 };
-//                 // let lib = unsafe { libloading::Library::new(so).unwrap() };
-//                 let old = library.replace(Some(Box::leak(Box::new(lib))));
+        // Calling the hot reloadable function
+        current(unsafe { ORIGINAL_APP_MAIN.unwrap() }).call(())
+    }
 
-//                 // don't forget the old library - but require its drop to be called
-//                 if let Some(old) = old {
-//                     libraries.write().push(old);
-//                 }
-//             }
-//         })
-//     });
+    inner_reloadable
+}
 
-//     library.with(|f| {
-//         if let Some(lib) = f {
-//             unsafe {
-//                 lib.get::<unsafe extern "C" fn() -> Element>(name.as_bytes())
-//                     .unwrap()()
-//             }
-//         } else {
-//             initial()
-//         }
-//     })
+// #[no_mangle]
+// pub extern "C" fn hotfn_load_binary_patch__ipbp(path: *const i8, jump_table_path: *const i8) {
+//     let patch = PathBuf::from(unsafe { CStr::from_ptr(path).to_str().unwrap() });
+//     let jump_table = PathBuf::from(unsafe { CStr::from_ptr(jump_table_path).to_str().unwrap() });
+//     run_patch(patch, jump_table)
 // }
 
-// #[link_section = ".hot_fns"]
-// fn make_thing() {}
+// /// Run the patch
+// pub fn run_patch(patch: PathBuf, jump_table: PathBuf) {
+//     let lib = unsafe { libloading::os::unix::Library::new(PathBuf::from(patch)).unwrap() };
+//     let lib = Box::leak(Box::new(lib));
 
-// mod __META_make_thing {
-//     #[link_section = ".meta.hot_fns"]
-//     static make_thing_meta: &[u8] = module_path!().as_bytes();
+//     // Load the jump table by deserializing it from the file
+
+//     let jump_table_path = PathBuf::from(jump_table);
+//     let mut jump_table: JumpTableRead =
+//         bincode::deserialize(&std::fs::read(jump_table_path).unwrap()).unwrap();
+
+//     // // Correct the jump table since dlopen will load the binary at a different address than the original
+//     // let old_dl_offset = unsafe { Library::this().get::<*const ()>(b"main") }
+//     //     .unwrap()
+//     //     .as_raw_ptr()
+//     //     .wrapping_sub(jump_table.old_main_address as usize);
+
+//     // Correct the jump table since dlopen will load the binary at a different address than the original
+//     let new_dl_offset = unsafe { lib.get::<*const ()>(b"main") }
+//         .unwrap()
+//         .as_raw_ptr()
+//         .wrapping_sub(jump_table.new_main_address as usize);
+
+//     // println!("old_dl_offset: {old_dl_offset:?}");
+//     println!("new_dl_offset: {new_dl_offset:?}");
+
+//     // Modify the jump table to be relative to the base address of the loaded library
+//     jump_table.map = jump_table
+//         .map
+//         .iter()
+//         .map(|(k, v)| (*k, *v - new_dl_offset as u64))
+//         // .map(|(k, v)| (*k - old_dl_offset as u64, *v - new_dl_offset as u64))
+//         .collect();
+
+//     unsafe { APP_JUMP_TABLE = Some(jump_table) }
+
+//     // And then call the original main function
+//     for handler in unsafe { HOTRELOAD_HANDLERS.iter() } {
+//         handler();
+//     }
 // }
 
-// patchfile {
-//     code,
-//     changed_roots,
-//     changed_symbols,
-//     statics?
+// /// Creates a new hotreloadable function based on the incoming function. The "key" here is the caller location.
+// /// If that changes then a new function will be generated. This basically lets us retour function pointers
+// /// without annotating them.
+// pub const fn hotreloadable(f: fn() -> Element) -> fn() -> Element {
+//     static mut ORIGINAL_APP_MAIN: Option<fn() -> Element> = None;
+
+//     unsafe {
+//         ORIGINAL_APP_MAIN = Some(f);
+//     }
+
+//     // this can be simply injected to dioxus core perhaps?
+//     pub fn inner_reloadable() -> Element {
+//         // runtime integration...
+//         use_hook(|| unsafe { HOTRELOAD_HANDLERS.push(dioxus::prelude::schedule_update()) });
+
+//         // Calling the hot reloadable function
+//         current(unsafe { ORIGINAL_APP_MAIN.unwrap() }).call(())
+//     }
+
+//     inner_reloadable
 // }
-
-struct HotFn<T> {
-    f: T,
-    // ptr: [u8; 8],
-    location: &'static mut &'static std::panic::Location<'static>,
-}
-
-#[track_caller]
-const fn register<T: Copy>(t: T) -> HotFn<T> {
-    static mut REGISTERED: &'static std::panic::Location<'static> = std::panic::Location::caller();
-
-    // let p = unsafe { std::mem::transmute(t) };
-
-    HotFn {
-        f: t,
-        // ptr: p,
-        location: unsafe { &mut REGISTERED },
-    }
-}
-
-#[test]
-fn itworks() {
-    fn some_loadable_function() -> String {
-        "hello".to_string()
-    }
-    fn some_other_fn() -> i32 {
-        123
-    }
-    fn some_other_fn2() -> String {
-        "hello".to_string()
-    }
-
-    let p = register(if true {
-        some_loadable_function as fn() -> String
-    } else {
-        some_other_fn2
-    });
-    let p2 = register(some_loadable_function);
-
-    let r = type_name_of_val(&p.f);
-    println!("r: {r}");
-
-    let p = p.f as *const fn() -> String;
-    println!("p: {p:?}");
-
-    let p = some_loadable_function as *const fn() -> String;
-    println!("p: {p:?}");
-
-    let p = (p2.f) as *const fn() -> String;
-    println!("p: {p:?}");
-
-    // println!("p: {:?}", p2.ptr as *const fn() -> String);
-}

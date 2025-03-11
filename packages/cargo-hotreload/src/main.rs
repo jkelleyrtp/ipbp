@@ -25,7 +25,6 @@ use tokio::{
 };
 
 mod diff;
-mod jumptable;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -181,7 +180,6 @@ async fn hotreload_loop() -> anyhow::Result<()> {
         let output_temp = fast_build(&result).await?;
 
         let jump_table = create_jump_table(fat_exe.as_std_path(), output_temp.as_std_path());
-        // println!("jump_table: {jump_table:#?}");
         let jump_table_path = workspace_root().join("data").join("jump_table.bin");
         std::fs::write(&jump_table_path, bincode::serialize(&jump_table).unwrap()).unwrap();
 
@@ -192,8 +190,10 @@ async fn hotreload_loop() -> anyhow::Result<()> {
             .write_all(
                 format!(
                     "process interrupt\nexpr (void) hotfn_load_binary_patch(\"{}\", \"{}\")\ncontinue\n",
+                    // "process interrupt\nexpr (void) hotfn_load_binary_patch__ipbp(\"{}\", \"{}\")\ncontinue\n",
                     output_temp,
-                    jump_table_path.display()
+                    jump_table_path.display(),
+
                 )
                 .as_bytes(),
             )
@@ -273,7 +273,7 @@ async fn fast_build(original: &CargoOutputResult) -> anyhow::Result<Utf8PathBuf>
         .stderr(Stdio::piped())
         .spawn()?;
 
-    let output = run_cargo_output(fast_build, true).await?;
+    let output = run_cargo_output(fast_build, false).await?;
 
     let object_files = output
         .link_args
@@ -282,7 +282,7 @@ async fn fast_build(original: &CargoOutputResult) -> anyhow::Result<Utf8PathBuf>
         .sorted()
         .collect::<Vec<_>>();
 
-    println!("Fast link objects: {:?}", object_files);
+    // println!("Fast link objects: {:?}", object_files);
 
     let epoch = std::time::SystemTime::UNIX_EPOCH;
     let target_loc = original
@@ -307,7 +307,9 @@ async fn fast_build(original: &CargoOutputResult) -> anyhow::Result<Utf8PathBuf>
         .output()
         .await?;
     let errs = String::from_utf8_lossy(&res.stderr);
-    println!("errs: {errs}");
+    if !errs.is_empty() {
+        println!("errs: {errs}");
+    }
 
     // println!("Fast link args: {:?}", output.link_args);
     // .arg("-undefined")

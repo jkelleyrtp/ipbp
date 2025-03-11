@@ -1,17 +1,16 @@
-use binary_patch::subsecond;
-use binary_patch::*;
 use dioxus::prelude::*;
 
 fn main() {
-    dioxus::launch(binary_patch::hotreloadable(app));
+    dioxus::launch(app);
 }
 
 fn app() -> Element {
     let mut count = use_signal(|| 0);
-    let abcv = 123;
+    let abcv = 220;
 
     rsx! {
         h1 { "{count}" }
+        button { onclick: move |_| needs_update(), "Needs Updat!" }
         button {
             onclick: move |_| {
                 count.set(count() + 1);
@@ -20,7 +19,7 @@ fn app() -> Element {
         }
         button {
             onclick: move |_| {
-                count.set(count() + 1);
+                count.set(count() + 2);
             },
             "Increment {abcv}"
         }
@@ -32,18 +31,28 @@ fn app() -> Element {
             "Increment {abcv}"
         }
         div { "hello world!" }
-        Child { id: 123, opt: "hell123o".to_string() }
-        Child2 { id: 123, opt: "hello".to_string() }
-        Child3 { id: 123, opt: "hello".to_string() }
+        for x in 0..6 {
+            Child { id: 123, opt: "hell123o".to_string() }
+        }
     }
 }
 
 #[component]
 fn Child(id: u32, opt: String) -> Element {
+    let mut count = use_signal(|| 2);
+    rsx! {
+        div { "Hello ?? child: {id} - {opt} ?" }
+        p { "count: {count}" }
+        button { onclick: move |_| { count += 1 }, "Increment Count" }
+    }
+}
+#[component]
+fn Child4(id: u32, opt: String) -> Element {
     rsx! {
         div { "Hello ?? child: {id} - {opt} ?" }
     }
 }
+
 #[component]
 fn Child3(id: u32, opt: String) -> Element {
     rsx! {
