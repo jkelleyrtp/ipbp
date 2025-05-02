@@ -1,3 +1,20 @@
+# this project has moved!
+
+originally, this repository was a testing ground for ideas. now, it's been integrated into the Dioxus CLI (dx).
+
+The PR that inlined this work into dioxus itself is here https://github.com/DioxusLabs/dioxus/pull/3797
+
+This repository demonstrated how to make binary patching work using just linker flags and a custom compiler setup on macOS, but the official Dioxus version works for all platforms:
+
+- web
+- desktop (mac / win / linux)
+- android
+- ios
+- x64 + wasm + aarch64
+
+
+ ----
+ 
 # ipbp.rs - in place binary patching
 
 ![it works](hotreload_works.gif)
@@ -51,9 +68,3 @@ Not only does completely circumvent the typical close, rebuild, relink, restart,
 - https://fasterthanli.me/series/making-our-own-executable-packer/part-18
 - https://docs.oracle.com/cd/E19683-01/816-1386/chapter6-54839/index.html
 - https://davidlattimore.github.io/posts/2024/02/04/speeding-up-the-rust-edit-build-run-cycle.html
-
-## ummmmmmmmmmmmmmmm
-
-- https://stackoverflow.com/questions/495262/linking-symbols-to-fixed-addresses-on-linux
-
-can't we just define the existing symbols - except for the target - from the already resolved symbols in space?
